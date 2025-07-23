@@ -316,7 +316,7 @@ export function Cart({ items, onUpdateQuantity, onRemoveItem }: CartProps) {
                         {[
                           { value: 'efectivo', label: 'Efectivo', desc: 'Pago al recibir' },
                           { value: 'tarjeta', label: 'Tarjeta', desc: 'Débito/Crédito' },
-                          { value: 'transferencia', label: 'transferenciaencia', desc: 'Bancaria' },
+                          { value: 'transferencia', label: 'Transferencia', desc: 'Bancaria' },
                           { value: 'mercadopago', label: 'MercadoPago', desc: 'Digital' }
                         ].map((method) => (
                           <label
