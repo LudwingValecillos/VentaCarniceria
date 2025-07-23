@@ -125,7 +125,7 @@ export function Cart({ items, onUpdateQuantity, onRemoveItem }: CartProps) {
           style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh' }}
         >
           <div 
-            className=" bg-white rounded-xl md:rounded-2xl shadow-2xl w-full max-w-lg max-h-[88vh] md:max-h-[95vh] overflow-hidden animate-scale-in border border-gray-200"
+            className=" bg-white rounded-xl md:rounded-2xl shadow-2xl w-full max-w-lg max-h-[75vh] md:max-h-[95vh] overflow-hidden animate-scale-in border border-gray-200"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
@@ -148,7 +148,7 @@ export function Cart({ items, onUpdateQuantity, onRemoveItem }: CartProps) {
             </div>
 
             {!showCustomerForm ? (
-              <div className="flex flex-col h-[calc(90vh-10rem)] md:h-[calc(90vh-8rem)]">
+              <div className="flex flex-col h-[calc(75vh-10rem)] md:h-[calc(90vh-8rem)]">
                 {/* Cart Items */}
                 <div className="flex-1 overflow-y-auto p-6">
                   {items.length === 0 ? (
@@ -256,7 +256,7 @@ export function Cart({ items, onUpdateQuantity, onRemoveItem }: CartProps) {
               </div>
             ) : (
               /* Customer Information Form */
-              <div className="flex flex-col h-[calc(90vh-10rem)] md:h-[calc(90vh-8rem)]">
+              <div className="flex flex-col h-[calc(75vh-10rem)] md:h-[calc(90vh-8rem)]">
                 <div className="flex-1 overflow-y-auto p-6">
                   <div className="mb-6">
                     <h3 className="text-xl font-bold text-gray-800 mb-2">Información de Contacto</h3>
