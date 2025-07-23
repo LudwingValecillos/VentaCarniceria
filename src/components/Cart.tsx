@@ -256,119 +256,123 @@ export function Cart({ items, onUpdateQuantity, onRemoveItem }: CartProps) {
               </div>
             ) : (
               /* Customer Information Form */
-              <div className="p-6">
-                <div className="mb-6">
-                  <h3 className="text-xl font-bold text-gray-800 mb-2">Información de Contacto</h3>
-                  <p className="text-gray-600 text-sm">Completa tus datos para finalizar el pedido</p>
-                </div>
-                
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    handleWhatsAppOrder();
-                  }}
-                  className="space-y-6"
-                >
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Nombre completo *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      className="input-modern w-full"
-                      placeholder="Ingresa tu nombre"
-                      value={customerInfo.name}
-                      onChange={(e) =>
-                        setCustomerInfo({
-                          ...customerInfo,
-                          name: e.target.value,
-                        })
-                      }
-                    />
+              <div className="flex flex-col h-[calc(90vh-10rem)] md:h-[calc(90vh-8rem)]">
+                <div className="flex-1 overflow-y-auto p-6">
+                  <div className="mb-6">
+                    <h3 className="text-xl font-bold text-gray-800 mb-2">Información de Contacto</h3>
+                    <p className="text-gray-600 text-sm">Completa tus datos para finalizar el pedido</p>
                   </div>
                   
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Dirección de entrega *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      className="input-modern w-full"
-                      placeholder="Calle, número, ciudad"
-                      value={customerInfo.location}
-                      onChange={(e) =>
-                        setCustomerInfo({
-                          ...customerInfo,
-                          location: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Método de Pago *
-                    </label>
-                    <div className="space-y-2">
-                      {[
-                        { value: 'cash', label: 'Efectivo', desc: 'Pago al recibir' },
-                        { value: 'card', label: 'Tarjeta', desc: 'Débito/Crédito' },
-                        { value: 'transfer', label: 'Transferencia', desc: 'Bancaria' },
-                        { value: 'mercadopago', label: 'MercadoPago', desc: 'Digital' }
-                      ].map((method) => (
-                        <label
-                          key={method.value}
-                          className={`flex items-center p-3 border-2 rounded-xl cursor-pointer transition-all duration-200 ${
-                            customerInfo.paymentMethod === method.value
-                              ? 'border-red-500 bg-red-50'
-                              : 'border-gray-200 hover:border-red-300 hover:bg-red-50'
-                          }`}
-                        >
-                          <input
-                            type="radio"
-                            value={method.value}
-                            checked={customerInfo.paymentMethod === method.value}
-                                                         onChange={(e) =>
-                               setCustomerInfo({
-                                 ...customerInfo,
-                                 paymentMethod: e.target.value as 'cash' | 'card' | 'transfer' | 'mercadopago',
-                               })
-                             }
-                            className="sr-only"
-                          />
-                          <div className="flex items-center gap-3">
-                            {getPaymentIcon(method.value)}
-                            <div>
-                              <div className="font-medium text-gray-800">{method.label}</div>
-                              <div className="text-sm text-gray-500">{method.desc}</div>
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      handleWhatsAppOrder();
+                    }}
+                    className="space-y-6"
+                  >
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Nombre completo *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        className="input-modern w-full"
+                        placeholder="Ingresa tu nombre"
+                        value={customerInfo.name}
+                        onChange={(e) =>
+                          setCustomerInfo({
+                            ...customerInfo,
+                            name: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Dirección de entrega *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        className="input-modern w-full"
+                        placeholder="Calle, número, ciudad"
+                        value={customerInfo.location}
+                        onChange={(e) =>
+                          setCustomerInfo({
+                            ...customerInfo,
+                            location: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Método de Pago *
+                      </label>
+                      <div className="space-y-2">
+                        {[
+                          { value: 'cash', label: 'Efectivo', desc: 'Pago al recibir' },
+                          { value: 'card', label: 'Tarjeta', desc: 'Débito/Crédito' },
+                          { value: 'transfer', label: 'Transferencia', desc: 'Bancaria' },
+                          { value: 'mercadopago', label: 'MercadoPago', desc: 'Digital' }
+                        ].map((method) => (
+                          <label
+                            key={method.value}
+                            className={`flex items-center p-3 border-2 rounded-xl cursor-pointer transition-all duration-200 ${
+                              customerInfo.paymentMethod === method.value
+                                ? 'border-red-500 bg-red-50'
+                                : 'border-gray-200 hover:border-red-300 hover:bg-red-50'
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              value={method.value}
+                              checked={customerInfo.paymentMethod === method.value}
+                               onChange={(e) =>
+                                 setCustomerInfo({
+                                   ...customerInfo,
+                                   paymentMethod: e.target.value as 'cash' | 'card' | 'transfer' | 'mercadopago',
+                                 })
+                               }
+                              className="sr-only"
+                            />
+                            <div className="flex items-center gap-3">
+                              {getPaymentIcon(method.value)}
+                              <div>
+                                <div className="font-medium text-gray-800">{method.label}</div>
+                                <div className="text-sm text-gray-500">{method.desc}</div>
+                              </div>
                             </div>
-                          </div>
-                        </label>
-                      ))}
+                          </label>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  </form>
+                </div>
 
-                  <div className="pt-4 border-t border-gray-200">
-                    <div className="flex gap-3">
-                      <button
-                        type="button"
-                        onClick={() => setShowCustomerForm(false)}
-                        className="flex-1 bg-white border-2 border-red-600 text-red-600 hover:bg-red-50 py-2 px-4 rounded-xl font-semibold transition-all duration-200"
-                      >
-                        Volver
-                      </button>
-                      <button
-                        type="submit"
-                        className="flex-1 bg-gradient-to-r from-red-600 to-orange-500 hover:from-red-700 hover:to-orange-600 text-white py-2 px-4 rounded-xl font-semibold transition-all duration-200 flex items-center justify-center gap-2"
-                      >
-                        <Send className="w-4 h-4" />
-                        Enviar Pedido
-                      </button>
-                    </div>
+                {/* Footer with buttons */}
+                <div className="border-t border-gray-200 p-6 bg-gray-50">
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setShowCustomerForm(false)}
+                      className="flex-1 bg-white border-2 border-red-600 text-red-600 hover:bg-red-50 py-2 px-4 rounded-xl font-semibold transition-all duration-200"
+                    >
+                      Volver
+                    </button>
+                    <button
+                      type="submit"
+                      onClick={handleWhatsAppOrder}
+                      className="flex-1 bg-gradient-to-r from-red-600 to-orange-500 hover:from-red-700 hover:to-orange-600 text-white py-2 px-4 rounded-xl font-semibold transition-all duration-200 flex items-center justify-center gap-2"
+                    >
+                      <Send className="w-4 h-4" />
+                      Enviar Pedido
+                    </button>
                   </div>
-                </form>
+                </div>
               </div>
             )}
           </div>
