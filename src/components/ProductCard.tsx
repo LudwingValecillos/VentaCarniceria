@@ -1,7 +1,7 @@
 import { Plus, Tag } from "lucide-react";
 import { Product } from "../types";
 import clsx from "clsx";
-import { memo } from "react";
+import { memo, useState } from "react";
 
 
 // Función para formatear precios con separadores de miles
@@ -26,11 +26,23 @@ interface ProductCardProps {
 }
 
 const ProductCard = memo(({ product, onAddToCart, className }: ProductCardProps) => {
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
+  
   const isOffer =
     product.offer ||
     product.name.includes("x") ||
     product.name.includes("X") ||
     product.name.includes("por");
+
+  const handleAddToCart = () => {
+    setIsAddingToCart(true);
+    onAddToCart(product);
+    
+    // Reset the button color after 1 second
+    setTimeout(() => {
+      setIsAddingToCart(false);
+    }, 1000);
+  };
 
   return (
     <div
@@ -96,8 +108,14 @@ const ProductCard = memo(({ product, onAddToCart, className }: ProductCardProps)
 
             {/* Botón de agregar al carrito - más pequeño en móvil */}
             <button
-              onClick={() => onAddToCart(product)}
-              className="bg-red-600 text-white p-1.5 sm:p-2 md:p-2.5 rounded-lg md:rounded-xl shadow-medium transition-all duration-200 md:hover:bg-red-700 md:hover:shadow-colored md:hover:scale-105"
+              onClick={handleAddToCart}
+              className={clsx(
+                "text-white p-1.5 sm:p-2 md:p-2.5 rounded-lg md:rounded-xl shadow-medium transition-all duration-200 md:hover:shadow-colored md:hover:scale-105",
+                {
+                  "bg-green-600 md:hover:bg-green-700": isAddingToCart,
+                  "bg-red-600 md:hover:bg-red-700": !isAddingToCart,
+                }
+              )}
             >
               <Plus className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5" />
             </button>

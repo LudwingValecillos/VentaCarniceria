@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { ShoppingCart, X, Plus, Minus, Trash2, Send, CreditCard, DollarSign, Smartphone } from "lucide-react";
+import { ShoppingCart, X, Plus, Minus, Trash2, Send, DollarSign, Smartphone, CreditCard } from "lucide-react";
 import { CartItem, CustomerInfo } from "../types";
 import { STORE_CONFIG } from "../config/store";
 
@@ -16,7 +16,7 @@ export function Cart({ items, onUpdateQuantity, onRemoveItem }: CartProps) {
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo>({
     name: "",
     location: "",
-    paymentMethod: "cash",
+    paymentMethod: "efectivo",
   });
 
   const total = items.reduce(
@@ -62,11 +62,11 @@ export function Cart({ items, onUpdateQuantity, onRemoveItem }: CartProps) {
 
   const getPaymentIcon = (method: string) => {
     switch (method) {
-      case 'cash':
+      case 'efectivo':
         return <DollarSign className="w-4 h-4" />;
-      case 'card':
+      case 'tarjeta':
         return <CreditCard className="w-4 h-4" />;
-      case 'transfer':
+      case 'transferencia':
         return <Smartphone className="w-4 h-4" />;
       case 'mercadopago':
         return <Smartphone className="w-4 h-4" />;
@@ -314,9 +314,9 @@ export function Cart({ items, onUpdateQuantity, onRemoveItem }: CartProps) {
                       </label>
                       <div className="space-y-2">
                         {[
-                          { value: 'cash', label: 'Efectivo', desc: 'Pago al recibir' },
-                          { value: 'card', label: 'Tarjeta', desc: 'Débito/Crédito' },
-                          { value: 'transfer', label: 'Transferencia', desc: 'Bancaria' },
+                          { value: 'efectivo', label: 'Efectivo', desc: 'Pago al recibir' },
+                          { value: 'tarjeta', label: 'Tarjeta', desc: 'Débito/Crédito' },
+                          { value: 'transferencia', label: 'transferenciaencia', desc: 'Bancaria' },
                           { value: 'mercadopago', label: 'MercadoPago', desc: 'Digital' }
                         ].map((method) => (
                           <label
@@ -334,7 +334,7 @@ export function Cart({ items, onUpdateQuantity, onRemoveItem }: CartProps) {
                                onChange={(e) =>
                                  setCustomerInfo({
                                    ...customerInfo,
-                                   paymentMethod: e.target.value as 'cash' | 'card' | 'transfer' | 'mercadopago',
+                                   paymentMethod: e.target.value as 'efectivo' | 'tarjeta' | 'transferencia' | 'mercadopago',
                                  })
                                }
                               className="sr-only"

@@ -95,19 +95,19 @@ export const STORE_CONFIG = {
   // Configuración de métodos de pago
   paymentMethods: [
     { 
-      value: 'cash', 
+      value: 'efectivo', 
       label: 'Efectivo', 
       desc: 'Pago al recibir',
       icon: '💵'
     },
     { 
-      value: 'card', 
+      value: 'tarjeta', 
       label: 'Tarjeta', 
       desc: 'Débito/Crédito',
       icon: '💳'
     },
     { 
-      value: 'transfer', 
+      value: 'transferencia', 
       label: 'Transferencia', 
       desc: 'Bancaria',
       icon: '🏦'

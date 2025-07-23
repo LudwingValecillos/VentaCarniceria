@@ -16,5 +16,5 @@ export interface CartItem extends Product {
 export interface CustomerInfo {
   name: string;
   location: string;
-  paymentMethod: 'cash' | 'card' | 'transfer' | 'mercadopago';
+  paymentMethod: 'efectivo' | 'tarjeta' | 'transferencia' | 'mercadopago';
 }
