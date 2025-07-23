@@ -97,7 +97,7 @@ const App: React.FC = () => {
   }, []);
 
   const handleWhatsAppContact = useCallback(() => {
-    window.open(STORE_CONFIG.social.whatsapp.url, '_blank');
+    window.open(STORE_CONFIG.social.whatsapp.url, '_blank ');
   }, []);
 
   const toggleSidebar = useCallback(() => {

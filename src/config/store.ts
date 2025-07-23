@@ -6,8 +6,8 @@ export const STORE_CONFIG = {
   
   // Información de contacto
   contact: {
-    phone: "11 6145-0595",
-    whatsapp: "91161450595",
+    phone: "11 2192-6239",
+    whatsapp: "91121926239",
     location: "Buenos Aires, Argentina",
     delivery: "Envíos gratis a toda la zona",
   },
@@ -23,7 +23,7 @@ export const STORE_CONFIG = {
       username: "Carnicería Lo De Nacho"
     },
     whatsapp: {
-      url: "https://wa.me/91161450595",
+      url: "https://wa.me/91121926239", 
       message: "Hola, me gustaría hacer un pedido."
     }
   },
