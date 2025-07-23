@@ -15,7 +15,7 @@ import clsx from 'clsx';
 
 const toastConfig: ToastOptions = {
   position: "top-right",
-  autoClose: 2000,
+  autoClose: 1000,
   hideProgressBar: false,
   closeOnClick: true,
   pauseOnHover: true,
@@ -378,7 +378,7 @@ const App: React.FC = () => {
               <div className="flex items-center gap-2 text-sm text-gray-400">
                 <span>Hecho con</span>
                 <span className="text-red-400 text-lg">❤️</span>
-                <span>para nuestros clientes</span>
+                <span>por <span className="text-blue-200">Next</span><span className="text-green-400">Code</span> </span>
               </div>
             </div>
           </div>

@@ -1,6 +1,6 @@
 export const STORE_CONFIG = {
   // Información básica de la carnicería
-  name: "Carnicería Lo De Nacho",
+  name: "Daniele Carniceria",
   tagline: "Los mejores cortes de carne fresca y de alta calidad",
   description: "Más de 20 años ofreciendo los mejores cortes de carne fresca y de alta calidad para tu hogar.",
   

@@ -1,10 +1,9 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { ToastOptions } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { Product } from '../types';
 import { PencilIcon, MagnifyingGlassIcon, SparklesIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/solid';
 import { useProductContext, safeToast } from '../context/ProductContext';
-import { addNewProduct, deleteProduct, updateProductImage } from '../data/api';
+import { addNewProduct } from '../data/api';
 import clsx from 'clsx';
 
 const toastConfig: ToastOptions = {

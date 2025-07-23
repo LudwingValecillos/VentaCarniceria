@@ -86,7 +86,7 @@ export const Login: React.FC = () => {
             {isLoading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
           </button>
         </form>
-        <ToastContainer position="top-right" autoClose={2000} />
+        <ToastContainer position="top-right" autoClose={1000} />
       </div>
     </div>
   );
