@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Play, Pause } from 'lucide-react';
+import { STORE_CONFIG } from '../config/store';
 
-// Importa imágenes separadas para desktop y mobile
+// Importa imágenes separadas para desktop y mobile (fallback)
 import img1 from '../images/banner1.png';
 import img2 from '../images/banner2.png';
 import img3 from '../images/banner3.png';
@@ -10,8 +11,8 @@ import img5 from '../images/banner5.png';
 import img6 from '../images/banner4.2.png';
 import img7 from '../images/banner1.2.png';
 
-const mobileImages = [img1, img2, img3, img4, img5];
-const desktopImages = [img7, img3, img6, img5];
+const defaultMobileImages = [img1, img2, img3, img4, img5];
+const defaultDesktopImages = [img7, img3, img6, img5];
 
 // Hook personalizado para detectar el tamaño de pantalla
 const useScreenSize = () => {
@@ -38,8 +39,17 @@ export function Carousel({ showCarousel = true }: CarouselProps) {
   const [isPlaying, setIsPlaying] = useState(true);
   const { isMobile } = useScreenSize();
   
-  // Selecciona el array de imágenes apropiado
-  const activeImages = isMobile ? mobileImages : desktopImages;
+  // Usar banner dinámico de Firebase o fallback a imágenes locales
+  const getDynamicImages = () => {
+    if (STORE_CONFIG.bannerUrl) {
+      // Si hay banner de Firebase, usar solo ese
+      return [STORE_CONFIG.bannerUrl];
+    }
+    // Si no hay banner, usar imágenes por defecto
+    return isMobile ? defaultMobileImages : defaultDesktopImages;
+  };
+  
+  const activeImages = getDynamicImages();
 
   useEffect(() => {
     // Reinicia el índice al cambiar entre vistas

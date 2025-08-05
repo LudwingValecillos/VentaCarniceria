@@ -10,7 +10,15 @@ import { ProductCard } from './components/ProductCard';
 import { PrivateRoute } from './components/PrivateRoute';
 // Initialize Firebase
 import './config/firebase';
+import { loadStoreConfig } from './config/store';
 import './index.css';
+
+// Cargar configuración de la carnicería al iniciar
+loadStoreConfig().then(() => {
+  console.log('✅ Configuración de carnicería cargada');
+}).catch((error) => {
+  console.error('❌ Error al cargar configuración:', error);
+});
 
 const router = createBrowserRouter([
   {

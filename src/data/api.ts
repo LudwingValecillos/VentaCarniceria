@@ -1,9 +1,10 @@
-import axios from 'axios';
 import { Product } from '../types';
+import { getProductsByCurrentUrl } from '../services/butcheryService';
+import { getFirestore, collection, getDocs } from 'firebase/firestore';
+import { app } from '../config/firebase';
+import axios from 'axios';
 
-// Nota: Por ahora se usan las credenciales directamente. Más adelante pásalas a variables de entorno (.env).
-const API_URL = 'https://api.jsonbin.io/v3/b/67aa7453acd3cb34a8dd211e'; // Reemplaza con tu URL de JSONBin
-const API_KEY = '$2a$10$NX0Yf/TcCBMfxZyucoKoB.2IKTOWiCwjk.c0NL/o/nf78rg/UQ.ny'; // Solo si es privado
+const db = getFirestore(app);
 
 // ----------------------------
 // Helper: Convertir File a Base64
@@ -21,29 +22,60 @@ const convertFileToBase64 = (file: File): Promise<string> => {
 // Funciones de Productos
 // ----------------------------
 
-export const fetchProducts = async () => {
+// Función helper para obtener la URL correcta (igual que en butcheryService)
+const getSearchUrl = (): string => {
+  let searchUrl = window.location.origin;
+  if (searchUrl.includes('localhost') || searchUrl.includes('127.0.0.1')) {
+    searchUrl = 'https://voluble-squirrel-a30bd3.netlify.app';
+  }
+  return searchUrl;
+};
+
+export const fetchProducts = async (): Promise<Product[]> => {
   try {
-    const response = await axios.get(API_URL, {
-      headers: { 'X-Master-Key': API_KEY },
+    // Obtener la URL correcta
+    const searchUrl = getSearchUrl();
+    
+    // Buscar la carnicería por URL
+    const butcheriesRef = collection(db, 'butcheries');
+    const butcheriesSnapshot = await getDocs(butcheriesRef);
+    
+    let butcheryId: string | null = null;
+    
+    // Encontrar la carnicería que coincide con la URL
+    butcheriesSnapshot.forEach((doc) => {
+      const data = doc.data();
+      if (data.url === searchUrl) {
+        butcheryId = doc.id;
+      }
     });
-
-    // Determina la fuente correcta de datos
-    const productsData =
-      response.data.record?.record || response.data.record || response.data || [];
-
-    // Asegura que productsData sea un array
-    const productsList = Array.isArray(productsData) ? productsData : [productsData];
-
-    // Transforma los datos para que coincidan con el tipo Product
-    const transformedProducts = productsList.map((product: any) => ({
+    
+    // Si no encontramos carnicería, usar 'demo' como fallback
+    if (!butcheryId) {
+      butcheryId = 'demo';
+    }
+    
+    // Obtener productos de la carnicería encontrada
+    const productsCollectionRef = collection(db, 'butcheries', butcheryId, 'products');
+    const querySnapshot = await getDocs(productsCollectionRef);
+    
+    const products: any[] = [];
+    querySnapshot.forEach((doc) => {
+      products.push({ id: doc.id, ...doc.data() });
+    });
+    
+    // Transformar datos para mantener compatibilidad con el formato esperado
+    const transformedProducts = products.map((product: any) => ({
       ...product,
       id: product.id?.toString() || crypto.randomUUID(),
-      price:
-        typeof product.price === 'string'
-          ? parseFloat(product.price.replace(/\./g, ''))
-          : product.price,
+      price: typeof product.price === 'string' 
+        ? parseFloat(product.price.replace(/\./g, ''))
+        : product.price || 0,
       active: product.active ?? true,
-      offer: product.offer ?? false,
+      offer: product.isOffer ?? product.offer ?? false,
+      category: product.category || 'general',
+      name: product.name || 'Producto sin nombre',
+      image: product.image || ''
     }));
 
     return transformedProducts;
@@ -52,6 +84,10 @@ export const fetchProducts = async () => {
     return [];
   }
 };
+
+// Las siguientes funciones usan JSONBin para administración
+const API_URL = 'https://api.jsonbin.io/v3/b/67aa7453acd3cb34a8dd211e';
+const API_KEY = '$2a$10$NX0Yf/TcCBMfxZyucoKoB.2IKTOWiCwjk.c0NL/o/nf78rg/UQ.ny';
 
 export const updateProductPrice = async (productId: string, newPrice: number) => {
   try {

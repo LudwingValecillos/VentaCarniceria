@@ -2,6 +2,7 @@ import { X, ChevronDown, ChevronUp, Home, Package, MessageCircle, Instagram, Fac
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { STORE_CONFIG } from '../config/store';
+import logo from '../images/logolodenacho.png';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -40,9 +41,16 @@ export function Sidebar({ isOpen, onClose, onCategorySelect }: SidebarProps) {
           {/* Header del sidebar */}
           <div className="bg-gradient-to-r from-red-600 to-orange-500 p-6 text-white">
             <div className="flex justify-between items-center">
-              <div>
-                <h2 className="text-2xl font-bold font-lobster tracking-wide">Menú</h2>
-                <p className="text-white/90 text-sm mt-1">{STORE_CONFIG.name}</p>
+              <div className="flex items-center gap-3">
+                <img 
+                  src={STORE_CONFIG.logoUrl || logo} 
+                  alt="Logo" 
+                  className="w-10 h-10 object-contain rounded-lg bg-white/10 p-1"
+                />
+                <div>
+                  <h2 className="text-lg font-bold font-lobster tracking-wide">Menú</h2>
+                  <p className="text-white/90 text-sm">{STORE_CONFIG.name}</p>
+                </div>
               </div>
               <button 
                 onClick={onClose} 
@@ -181,8 +189,7 @@ export function Sidebar({ isOpen, onClose, onCategorySelect }: SidebarProps) {
             <div className="mt-4 pt-4 border-t border-gray-200">
               <p className="text-xs text-gray-500 text-center leading-relaxed">
                 <span className="font-medium">Horarios:</span><br />
-                {STORE_CONFIG.hours.weekdays.days}: {STORE_CONFIG.hours.weekdays.morning} / {STORE_CONFIG.hours.weekdays.afternoon}<br />
-                {STORE_CONFIG.hours.weekend.days}: {STORE_CONFIG.hours.weekend.hours}
+                <div dangerouslySetInnerHTML={{ __html: STORE_CONFIG.schedules.replace(/\|/g, '<br/>') }} />
               </p>
             </div>
           </div>

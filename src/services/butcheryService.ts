@@ -36,6 +36,21 @@ export interface Butchery {
 }
 
 /**
+ * Helper function para obtener la URL de búsqueda correcta
+ * En localhost, usar la URL de producción de Netlify
+ */
+const getSearchUrl = (): string => {
+  let searchUrl = window.location.origin;
+  
+  // Si estamos en localhost, usar la URL de producción
+  if (searchUrl.includes('localhost') || searchUrl.includes('127.0.0.1')) {
+    searchUrl = 'https://voluble-squirrel-a30bd3.netlify.app';
+  }
+  
+  return searchUrl;
+};
+
+/**
  * Obtiene los productos de una carnicería basándose en la URL actual
  * Gets products from a butchery based on the current URL
  * 
@@ -43,27 +58,22 @@ export interface Butchery {
  */
 export const getProductsByCurrentUrl = async (): Promise<Product[]> => {
   try {
-    // 1. Obtener la URL actual
-    const currentUrl = window.location.origin;
-    console.log('🔍 Buscando carnicería para URL:', currentUrl);
+    // 1. Obtener la URL de búsqueda correcta
+    const searchUrl = getSearchUrl();
 
     // 2. Buscar el documento de carnicería que coincida con la URL
     const butcheriesRef = collection(db, 'butcheries');
-    const urlQuery = query(butcheriesRef, where('url', '==', currentUrl));
+    const urlQuery = query(butcheriesRef, where('url', '==', searchUrl));
     const butcherySnapshot: QuerySnapshot<DocumentData> = await getDocs(urlQuery);
 
     // Verificar si encontramos una carnicería
     if (butcherySnapshot.empty) {
-      console.warn('⚠️ No se encontró ninguna carnicería para la URL:', currentUrl);
       return [];
     }
 
     // Obtener el primer documento que coincida (debería ser único)
     const butcheryDoc = butcherySnapshot.docs[0];
     const butcheryId = butcheryDoc.id;
-    const butcheryData = butcheryDoc.data() as Butchery;
-    
-    console.log('✅ Carnicería encontrada:', butcheryData.name, '(ID:', butcheryId, ')');
 
     // 3. Obtener todos los productos de la subcolección "products"
     const productsRef = collection(db, 'butcheries', butcheryId, 'products');
@@ -75,11 +85,10 @@ export const getProductsByCurrentUrl = async (): Promise<Product[]> => {
       ...doc.data()
     } as Product));
 
-    console.log('📦 Productos obtenidos:', products.length);
     return products;
 
   } catch (error) {
-    console.error('❌ Error al obtener productos por URL:', error);
+    console.error('Error al obtener productos por URL:', error);
     throw new Error(`Error al cargar productos: ${error instanceof Error ? error.message : 'Error desconocido'}`);
   }
 };
@@ -93,8 +102,6 @@ export const getProductsByCurrentUrl = async (): Promise<Product[]> => {
  */
 export const getProductsByButcheryId = async (butcheryId: string): Promise<Product[]> => {
   try {
-    console.log('🔍 Obteniendo productos para carnicería ID:', butcheryId);
-
     const productsRef = collection(db, 'butcheries', butcheryId, 'products');
     const productsSnapshot: QuerySnapshot<DocumentData> = await getDocs(productsRef);
 
@@ -103,11 +110,10 @@ export const getProductsByButcheryId = async (butcheryId: string): Promise<Produ
       ...doc.data()
     } as Product));
 
-    console.log('📦 Productos obtenidos:', products.length);
     return products;
 
   } catch (error) {
-    console.error('❌ Error al obtener productos por ID:', error);
+    console.error('Error al obtener productos por ID:', error);
     throw new Error(`Error al cargar productos: ${error instanceof Error ? error.message : 'Error desconocido'}`);
   }
 };
@@ -120,15 +126,13 @@ export const getProductsByButcheryId = async (butcheryId: string): Promise<Produ
  */
 export const getButcheryByCurrentUrl = async (): Promise<Butchery | null> => {
   try {
-    const currentUrl = window.location.origin;
-    console.log('🔍 Buscando información de carnicería para URL:', currentUrl);
+    const searchUrl = getSearchUrl();
 
     const butcheriesRef = collection(db, 'butcheries');
-    const urlQuery = query(butcheriesRef, where('url', '==', currentUrl));
+    const urlQuery = query(butcheriesRef, where('url', '==', searchUrl));
     const butcherySnapshot: QuerySnapshot<DocumentData> = await getDocs(urlQuery);
 
     if (butcherySnapshot.empty) {
-      console.warn('⚠️ No se encontró carnicería para la URL:', currentUrl);
       return null;
     }
 
@@ -138,11 +142,10 @@ export const getButcheryByCurrentUrl = async (): Promise<Butchery | null> => {
       ...butcheryDoc.data()
     } as Butchery;
 
-    console.log('✅ Información de carnicería obtenida:', butchery.name);
     return butchery;
 
   } catch (error) {
-    console.error('❌ Error al obtener información de carnicería:', error);
+    console.error('Error al obtener información de carnicería:', error);
     throw new Error(`Error al cargar información: ${error instanceof Error ? error.message : 'Error desconocido'}`);
   }
 };
@@ -158,16 +161,14 @@ export const getButcheryAndProductsByUrl = async (): Promise<{
   products: Product[];
 }> => {
   try {
-    const currentUrl = window.location.origin;
-    console.log('🔍 Obteniendo carnicería completa para URL:', currentUrl);
+    const searchUrl = getSearchUrl();
 
     // Buscar carnicería
     const butcheriesRef = collection(db, 'butcheries');
-    const urlQuery = query(butcheriesRef, where('url', '==', currentUrl));
+    const urlQuery = query(butcheriesRef, where('url', '==', searchUrl));
     const butcherySnapshot: QuerySnapshot<DocumentData> = await getDocs(urlQuery);
 
     if (butcherySnapshot.empty) {
-      console.warn('⚠️ No se encontró carnicería para la URL:', currentUrl);
       return { butchery: null, products: [] };
     }
 
@@ -185,13 +186,11 @@ export const getButcheryAndProductsByUrl = async (): Promise<{
       id: doc.id,
       ...doc.data()
     } as Product));
-
-    console.log('✅ Carnicería completa obtenida:', butchery.name, 'con', products.length, 'productos');
     
     return { butchery, products };
 
   } catch (error) {
-    console.error('❌ Error al obtener carnicería completa:', error);
+    console.error('Error al obtener carnicería completa:', error);
     throw new Error(`Error al cargar datos: ${error instanceof Error ? error.message : 'Error desconocido'}`);
   }
 };
