@@ -8,6 +8,8 @@ import { ProductProvider } from './context/ProductContext';
 import { Carousel } from './components/Carousel';
 import { ProductCard } from './components/ProductCard';
 import { PrivateRoute } from './components/PrivateRoute';
+// Initialize Firebase
+import './config/firebase';
 import './index.css';
 
 const router = createBrowserRouter([
