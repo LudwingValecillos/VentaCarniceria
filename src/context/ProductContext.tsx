@@ -146,16 +146,7 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
   const fetchPromiseRef = useRef<Promise<void> | null>(null);
 
   const fetchProductsAction = useCallback(async () => {
-    // Only fetch if not already initialized or if products are empty
-    if (state.initialized && state.products.length > 0) {
-      return;
-    }
-    
-    // If there's already a fetch in progress, return the existing promise
-    if (fetchPromiseRef.current) {
-      return fetchPromiseRef.current;
-    }
-    
+    // Always allow fetching for admin operations
     // Create a new fetch promise
     fetchPromiseRef.current = (async () => {
       dispatch({ type: 'FETCH_PRODUCTS_START' });
@@ -174,7 +165,7 @@ export const ProductProvider: React.FC<{ children: ReactNode }> = ({ children })
     })();
     
     return fetchPromiseRef.current;
-  }, [state.initialized, state.products.length]);
+  }, []);
 
   const toggleProductStatusAction = useCallback(async (productId: string) => {
     try {

@@ -1,20 +1,12 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { ToastOptions } from 'react-toastify';
+// Removed unused ToastOptions import
 import 'react-toastify/dist/ReactToastify.css';
 import { PencilIcon, MagnifyingGlassIcon, SparklesIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/solid';
 import { useProductContext, safeToast } from '../context/ProductContext';
 import { addNewProduct } from '../data/api';
 import clsx from 'clsx';
 
-const toastConfig: ToastOptions = {
-  position: "top-right",
-  autoClose: 2000,
-  hideProgressBar: false,
-  closeOnClick: true,
-  pauseOnHover: true,
-  draggable: true,
-  progress: undefined,
-};
+// Toast configuration is now handled by safeToast function
 
 export const AdminProducts: React.FC = () => {
   const {
@@ -63,27 +55,51 @@ export const AdminProducts: React.FC = () => {
     });
   };
 
-  const handleToggleProductStatus = (productId: string) => {
-    toggleProductStatusAction(productId);
+  const handleToggleProductStatus = async (productId: string) => {
+    try {
+      await toggleProductStatusAction(productId);
+      await fetchProductsAction(); // Refresh the products list
+      safeToast('Estado del producto actualizado', 'success');
+    } catch {
+      safeToast('Error al cambiar el estado del producto', 'error');
+    }
   };
 
-  const handleUpdateProductPrice = (productId: string) => {
+  const handleUpdateProductPrice = async (productId: string) => {
     const numericPrice = parseFloat(newPrice.replace(/\./g, ''));
     if (!isNaN(numericPrice)) {
-      updateProductPriceAction(productId, numericPrice);
-      setEditingPriceId(null);
+      try {
+        await updateProductPriceAction(productId, numericPrice);
+        await fetchProductsAction(); // Refresh the products list
+        setEditingPriceId(null);
+        safeToast('Precio actualizado exitosamente', 'success');
+      } catch {
+        safeToast('Error al actualizar el precio', 'error');
+      }
     }
   };
 
-  const handleUpdateProductName = (productId: string) => {
+  const handleUpdateProductName = async (productId: string) => {
     if (newName.trim()) {
-      updateProductNameAction(productId, newName.trim());
-      setEditingNameId(null);
+      try {
+        await updateProductNameAction(productId, newName.trim());
+        await fetchProductsAction(); // Refresh the products list
+        setEditingNameId(null);
+        safeToast('Nombre actualizado exitosamente', 'success');
+      } catch {
+        safeToast('Error al actualizar el nombre', 'error');
+      }
     }
   };
 
-  const handleToggleProductOffer = (productId: string) => {
-    toggleProductOfferAction(productId);
+  const handleToggleProductOffer = async (productId: string) => {
+    try {
+      await toggleProductOfferAction(productId);
+      await fetchProductsAction(); // Refresh the products list
+      safeToast('Estado de oferta actualizado', 'success');
+    } catch {
+      safeToast('Error al cambiar el estado de oferta', 'error');
+    }
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -97,18 +113,20 @@ export const AdminProducts: React.FC = () => {
     if (isAddingProduct) return;
     
     if (!newProductName || !newProductPrice || !newProductCategory || !newProductImage) {
-      safeToast('Por favor, complete todos los campos', 'error', toastConfig);
+      safeToast('Por favor, complete todos los campos', 'error');
       return;
     }
 
     setIsAddingProduct(true);
     
     try {
+      // TypeScript assertion is safe here because we checked for null above
+      const productImage = newProductImage!;
       await addNewProduct({
         name: newProductName,
         price: newProductPrice,
         category: newProductCategory,
-        image: newProductImage,
+        image: productImage,
         offer: newProductOffer
       });
 
@@ -119,8 +137,8 @@ export const AdminProducts: React.FC = () => {
       setNewProductImage(null);
       setNewProductOffer(false);
       await fetchProductsAction();
-    } catch (error) {
-      safeToast('Error al agregar el producto', 'error', toastConfig);
+    } catch {
+      safeToast('Error al agregar el producto', 'error');
     } finally {
       setIsAddingProduct(false);
     }
@@ -130,10 +148,16 @@ export const AdminProducts: React.FC = () => {
     setDeleteModalProductId(productId);
   };
 
-  const confirmDeleteProduct = () => {
+  const confirmDeleteProduct = async () => {
     if (deleteModalProductId) {
-      deleteProductAction(deleteModalProductId);
-      setDeleteModalProductId(null);
+      try {
+        await deleteProductAction(deleteModalProductId);
+        await fetchProductsAction(); // Refresh the products list
+        setDeleteModalProductId(null);
+        safeToast('Producto eliminado exitosamente', 'success');
+      } catch {
+        safeToast('Error al eliminar el producto', 'error');
+      }
     }
   };
 
@@ -141,12 +165,18 @@ export const AdminProducts: React.FC = () => {
     setDeleteModalProductId(null);
   };
 
-  const handleUpdateProductImage = (productId: string) => {
+  const handleUpdateProductImage = async (productId: string) => {
     if (newProductImage) {
-      updateProductImageAction(productId, newProductImage);
-      setEditingImageId(null);
-      setNewProductImage(null);
-      setImagePreview(null);
+      try {
+        await updateProductImageAction(productId, newProductImage);
+        await fetchProductsAction(); // Refresh the products list
+        setEditingImageId(null);
+        setNewProductImage(null);
+        setImagePreview(null);
+        safeToast('Imagen actualizada exitosamente', 'success');
+      } catch {
+        safeToast('Error al actualizar la imagen', 'error');
+      }
     }
   };
 
