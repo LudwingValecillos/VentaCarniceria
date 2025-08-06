@@ -2,9 +2,11 @@ import React, { useState, useMemo, useEffect } from 'react';
 // Removed unused ToastOptions import
 import 'react-toastify/dist/ReactToastify.css';
 import { PencilIcon, MagnifyingGlassIcon, SparklesIcon, PlusIcon, TrashIcon, ShoppingCartIcon, ClockIcon, CubeIcon } from '@heroicons/react/24/solid';
+import { Package } from 'lucide-react';
 import { useProductContext, safeToast } from '../context/ProductContext';
 import SalesModal from '../components/SalesModal';
 import SalesHistory from '../components/SalesHistory';
+import AddStockModal from '../components/AddStockModal';
 import clsx from 'clsx';
 
 // Toast configuration is now handled by safeToast function
@@ -37,6 +39,7 @@ export const AdminProducts: React.FC = () => {
   const [deleteModalProductId, setDeleteModalProductId] = useState<string | null>(null);
   const [editingImageId, setEditingImageId] = useState<string | null>(null);
   const [isSalesModalOpen, setIsSalesModalOpen] = useState(false);
+  const [isAddStockModalOpen, setIsAddStockModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'products' | 'sales'>('products');
 
   useEffect(() => {
@@ -187,13 +190,22 @@ export const AdminProducts: React.FC = () => {
           Panel de Administración
         </h1>
         {activeTab === 'products' && (
-          <button
-            onClick={() => setIsSalesModalOpen(true)}
-            className="bg-gradient-to-r from-green-600 to-emerald-500 hover:from-green-700 hover:to-emerald-600 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 hover:scale-105 shadow-lg flex items-center justify-center gap-2"
-          >
-            <ShoppingCartIcon className="w-5 h-5" />
-            Nueva Venta
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setIsAddStockModalOpen(true)}
+              className="bg-gradient-to-r from-blue-600 to-indigo-500 hover:from-blue-700 hover:to-indigo-600 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 hover:scale-105 shadow-lg flex items-center justify-center gap-2"
+            >
+              <Package className="w-5 h-5" />
+              Agregar Stock
+            </button>
+            <button
+              onClick={() => setIsSalesModalOpen(true)}
+              className="bg-gradient-to-r from-green-600 to-emerald-500 hover:from-green-700 hover:to-emerald-600 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 hover:scale-105 shadow-lg flex items-center justify-center gap-2"
+            >
+              <ShoppingCartIcon className="w-5 h-5" />
+              Nueva Venta
+            </button>
+          </div>
         )}
       </div>
 
@@ -533,6 +545,11 @@ export const AdminProducts: React.FC = () => {
       <SalesModal 
         isOpen={isSalesModalOpen}
         onClose={() => setIsSalesModalOpen(false)}
+      />
+
+      <AddStockModal 
+        isOpen={isAddStockModalOpen}
+        onClose={() => setIsAddStockModalOpen(false)}
       />
     </div>
   );

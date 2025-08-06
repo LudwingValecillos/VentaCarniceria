@@ -213,7 +213,7 @@ const App: React.FC = () => {
                   </div>
                 ) : (
                   <div className="text-center">
-                    <div className="card-modern p-2 md:p-8 max-w-2xl mx-auto bg-gradient-to-r from-orange-500 to-red-500">
+                    <div className="card-modern p-2 max-w-2xl mx-auto bg-gradient-to-r from-orange-500 to-red-500">
                       <h2 className="font-lobster text-2xl md:text-4xl mb-4 tracking-wide">
                         {STORE_CONFIG.messages.offers.title}
                       </h2>
