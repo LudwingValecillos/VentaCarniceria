@@ -3,6 +3,8 @@ import { createPortal } from "react-dom";
 import { ShoppingCart, X, Plus, Minus, Trash2, Send, DollarSign, Smartphone, CreditCard } from "lucide-react";
 import { CartItem, CustomerInfo } from "../types";
 import { STORE_CONFIG } from "../config/store";
+import { createSaleAPI } from '../data/api';
+import { toast } from 'react-toastify';
 
 interface CartProps {
   items: CartItem[];
@@ -13,6 +15,7 @@ interface CartProps {
 export function Cart({ items, onUpdateQuantity, onRemoveItem }: CartProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [showCustomerForm, setShowCustomerForm] = useState(false);
+  const [isProcessingOrder, setIsProcessingOrder] = useState(false);
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo>({
     name: "",
     location: "",
@@ -35,29 +38,97 @@ export function Cart({ items, onUpdateQuantity, onRemoveItem }: CartProps) {
     });
   };
 
-  const handleWhatsAppOrder = () => {
-    const message =
-      `*Nuevo Pedido*\n\n` +
-      `*Cliente:* ${customerInfo.name}\n` +
-      `*Ubicación:* ${customerInfo.location}\n` +
-      `*Método de Pago:* ${customerInfo.paymentMethod}\n\n` +
-      `*Productos:*\n${items
-        .map(
-          (item) => {
-            const price = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
-            return `- ${item.name}: ${item.quantity}kg x $${formatPrice(
-              price
-            )} = $${formatPrice(price * item.quantity)}`;
-          }
-        )
-        .join("\n")}\n\n` +
-      `*Total:* $${formatPrice(total)}`;
+  const handleWhatsAppOrder = async () => {
+    setIsProcessingOrder(true);
+    try {
+      // Registrar venta en Firebase con estado "pendiente"
+      const saleData = {
+        items: items.map(item => ({
+          productId: item.id,
+          productName: item.name,
+          quantity: item.quantity,
+          unitPrice: typeof item.price === 'string' ? parseFloat(item.price) : item.price,
+          category: item.category || 'general'
+        })),
+        notes: `Pedido WhatsApp - Cliente: ${customerInfo.name} | Ubicación: ${customerInfo.location} | Pago: ${customerInfo.paymentMethod}`,
+        status: 'pending' as const
+      };
 
-    window.open(
-      `${STORE_CONFIG.social.whatsapp.url}?text=${encodeURIComponent(message)}`
-    );
-    setIsOpen(false);
-    setShowCustomerForm(false);
+      await createSaleAPI(saleData);
+
+      // Mostrar mensaje de éxito
+      toast.success('🎉 Pedido registrado en el sistema como PENDIENTE', {
+        position: "top-right",
+        autoClose: 3000,
+      });
+
+      // Enviar mensaje por WhatsApp
+      const message =
+        `*Nuevo Pedido*\n\n` +
+        `*Cliente:* ${customerInfo.name}\n` +
+        `*Ubicación:* ${customerInfo.location}\n` +
+        `*Método de Pago:* ${customerInfo.paymentMethod}\n\n` +
+        `*Productos:*\n${items
+          .map(
+            (item) => {
+              const price = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
+              return `- ${item.name}: ${item.quantity}kg x $${formatPrice(
+                price
+              )} = $${formatPrice(price * item.quantity)}`;
+            }
+          )
+          .join("\n")}\n\n` +
+        `*Total:* $${formatPrice(total)}`;
+
+      window.open(
+        `${STORE_CONFIG.social.whatsapp.url}?text=${encodeURIComponent(message)}`
+      );
+
+      // Limpiar carrito y cerrar modales
+      items.forEach(item => onRemoveItem(item.id));
+      setIsOpen(false);
+      setShowCustomerForm(false);
+
+    } catch (error) {
+      console.error('Error al registrar pedido:', error);
+      toast.error('❌ Error al registrar el pedido en el sistema', {
+        position: "top-right",
+        autoClose: 3000,
+      });
+      
+      // Aún así continuar con WhatsApp si el usuario quiere
+      const continueWithWhatsApp = window.confirm(
+        'Hubo un error al registrar el pedido en el sistema.\n¿Deseas continuar enviando por WhatsApp de todas formas?'
+      );
+      
+      if (continueWithWhatsApp) {
+        const message =
+          `*Nuevo Pedido*\n\n` +
+          `*Cliente:* ${customerInfo.name}\n` +
+          `*Ubicación:* ${customerInfo.location}\n` +
+          `*Método de Pago:* ${customerInfo.paymentMethod}\n\n` +
+          `*Productos:*\n${items
+            .map(
+              (item) => {
+                const price = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
+                return `- ${item.name}: ${item.quantity}kg x $${formatPrice(
+                  price
+                )} = $${formatPrice(price * item.quantity)}`;
+              }
+            )
+            .join("\n")}\n\n` +
+          `*Total:* $${formatPrice(total)}`;
+
+        window.open(
+          `${STORE_CONFIG.social.whatsapp.url}?text=${encodeURIComponent(message)}`
+        );
+        
+        setIsOpen(false);
+        setShowCustomerForm(false);
+      }
+    } finally {
+      setIsProcessingOrder(false);
+    }
   };
 
   const getPaymentIcon = (method: string) => {
@@ -366,10 +437,24 @@ export function Cart({ items, onUpdateQuantity, onRemoveItem }: CartProps) {
                     <button
                       type="submit"
                       onClick={handleWhatsAppOrder}
-                      className="flex-1 bg-gradient-to-r from-red-600 to-orange-500 hover:from-red-700 hover:to-orange-600 text-white py-2 px-4 rounded-xl font-semibold transition-all duration-200 flex items-center justify-center gap-2"
+                      disabled={isProcessingOrder}
+                      className={`flex-1 font-semibold transition-all duration-200 flex items-center justify-center gap-2 py-2 px-4 rounded-xl ${
+                        isProcessingOrder
+                          ? 'bg-gray-400 cursor-not-allowed'
+                          : 'bg-gradient-to-r from-red-600 to-orange-500 hover:from-red-700 hover:to-orange-600 text-white'
+                      }`}
                     >
-                      <Send className="w-4 h-4" />
-                      Enviar Pedido
+                      {isProcessingOrder ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          Registrando...
+                        </>
+                      ) : (
+                        <>
+                          <Send className="w-4 h-4" />
+                          Enviar Pedido
+                        </>
+                      )}
                     </button>
                   </div>
                 </div>

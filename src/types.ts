@@ -19,3 +19,31 @@ export interface CustomerInfo {
   location: string;
   paymentMethod: 'efectivo' | 'tarjeta' | 'transferencia' | 'mercadopago';
 }
+
+// Sales system types
+export interface Sale {
+  id: string;
+  date: Date;
+  totalAmount: number;
+  totalItems: number;
+  totalQuantity: number;
+  status: 'completed' | 'pending' | 'cancelled';
+  createdAt: Date;
+  updatedAt: Date;
+  notes?: string;
+}
+
+export interface SaleItem {
+  id: string;
+  productId: string;
+  productName: string;
+  quantity: number;
+  unitPrice: number;
+  subtotal: number;
+  category: string;
+  createdAt: Date;
+}
+
+export interface SaleWithItems extends Sale {
+  items: SaleItem[];
+}

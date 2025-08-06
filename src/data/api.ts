@@ -10,7 +10,11 @@ import {
   updateProductPriceInFirebase,
   updateProductNameInFirebase,
   updateProductStockInFirebase,
-  uploadImageToImgBB
+  uploadImageToImgBB,
+  createSale,
+  getSalesHistory,
+  getSaleWithItems,
+  updateSaleStatus
 } from '../services/firebaseAdminService';
 
 export const fetchProducts = async (): Promise<Product[]> => {
@@ -145,6 +149,74 @@ export const updateProductStock = async (productId: string, newStock: number) =>
     return await fetchProductsFromFirebase();
   } catch (error) {
     console.error('Error updating product stock:', error);
+    throw error;
+  }
+};
+
+// Sales API functions
+export const createSaleAPI = async (saleData: {
+  items: Array<{
+    productId: string;
+    productName: string;
+    quantity: number;
+    unitPrice: number;
+    category: string;
+  }>;
+  notes?: string;
+  status?: 'completed' | 'pending' | 'cancelled';
+}) => {
+  try {
+    console.log('🛒 Creating sale...');
+    const sale = await createSale(saleData);
+    console.log('✅ Sale created successfully!');
+    return sale;
+  } catch (error) {
+    console.error('Error creating sale:', error);
+    throw error;
+  }
+};
+
+export const fetchSalesHistory = async (
+  limit: number = 50,
+  startDate?: Date,
+  endDate?: Date,
+  status?: string
+) => {
+  try {
+    return await getSalesHistory(limit, startDate, endDate, status);
+  } catch (error) {
+    console.error('Error fetching sales history:', error);
+    return [];
+  }
+};
+
+export const fetchSaleDetails = async (saleId: string) => {
+  try {
+    return await getSaleWithItems(saleId);
+  } catch (error) {
+    console.error('Error fetching sale details:', error);
+    throw error;
+  }
+};
+
+export const updateSaleStatusAPI = async (
+  saleId: string, 
+  newStatus: 'completed' | 'pending' | 'cancelled',
+  currentStatus: 'completed' | 'pending' | 'cancelled'
+) => {
+  try {
+    const result = await updateSaleStatus(saleId, newStatus, currentStatus);
+    console.log('✅ Sale status updated successfully!');
+    
+    // Return information about whether stock needs updating
+    return {
+      needsStockUpdate: result.needsStockUpdate,
+      saleItems: result.saleItems,
+      shouldDeductStock: (currentStatus === 'pending' || currentStatus === 'cancelled') && newStatus === 'completed',
+      shouldRestoreStock: currentStatus === 'completed' && (newStatus === 'pending' || newStatus === 'cancelled')
+    };
+  } catch (error) {
+    console.error('Error updating sale status:', error);
     throw error;
   }
 };

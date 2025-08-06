@@ -7,12 +7,18 @@ import {
   updateDoc, 
   deleteDoc, 
   getDoc,
+  setDoc,
   serverTimestamp,
-  FieldValue
+  FieldValue,
+  query,
+  where,
+  orderBy,
+  limit as limitQuery,
+  QueryConstraint
 } from 'firebase/firestore';
 // Solo usamos Firebase para datos, ImgBB para imágenes
 import { app } from '../config/firebase';
-import { Product } from '../types';
+import { Product, Sale, SaleItem, SaleWithItems } from '../types';
 
 // Initialize Firebase services
 const db = getFirestore(app);
@@ -419,6 +425,262 @@ export const updateProductStockInFirebase = async (
   }
 };
 
+/**
+ * Create a new sale with items
+ */
+export const createSale = async (saleData: {
+  items: Array<{
+    productId: string;
+    productName: string;
+    quantity: number;
+    unitPrice: number;
+    category: string;
+  }>;
+  notes?: string;
+  status?: 'completed' | 'pending' | 'cancelled';
+}): Promise<Sale> => {
+  try {
+    const butcheryId = await getCurrentButcheryId();
+    
+    // Calculate totals
+    const totalAmount = saleData.items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
+    const totalQuantity = saleData.items.reduce((sum, item) => sum + item.quantity, 0);
+    const totalItems = saleData.items.length;
+    
+    // Generate sale ID
+    const now = new Date();
+    const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '');
+    const timeStr = now.getHours().toString().padStart(2, '0') + now.getMinutes().toString().padStart(2, '0');
+    const saleId = `sale_${dateStr}_${timeStr}`;
+    
+    // Create sale document
+    const saleDoc = {
+      date: serverTimestamp(),
+      totalAmount,
+      totalItems,
+      totalQuantity,
+      status: saleData.status || 'completed' as const,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+      notes: saleData.notes || null
+    };
+    
+    const salesRef = collection(db, 'butcheries', butcheryId, 'sales');
+    const saleDocRef = doc(salesRef, saleId);
+    await setDoc(saleDocRef, saleDoc);
+    
+    // Create items subcollection
+    const itemsRef = collection(saleDocRef, 'items');
+    const itemPromises = saleData.items.map(async (item, index) => {
+      const itemDoc = {
+        productId: item.productId,
+        productName: item.productName,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        subtotal: item.quantity * item.unitPrice,
+        category: item.category,
+        createdAt: serverTimestamp()
+      };
+      
+      const itemDocRef = doc(itemsRef, (index + 1).toString());
+      await setDoc(itemDocRef, itemDoc);
+    });
+    
+    await Promise.all(itemPromises);
+    
+    const sale: Sale = {
+      id: saleId,
+      date: now,
+      totalAmount,
+      totalItems,
+      totalQuantity,
+      status: saleData.status || 'completed',
+      createdAt: now,
+      updatedAt: now,
+      notes: saleData.notes
+    };
+    
+    console.log('✅ Sale created successfully:', saleId);
+    return sale;
+    
+  } catch (error) {
+    console.error('❌ Error creating sale:', error);
+    throw new Error('Error al crear la venta');
+  }
+};
+
+/**
+ * Get sales history with optional filters
+ */
+export const getSalesHistory = async (
+  limitCount: number = 50,
+  startDate?: Date,
+  endDate?: Date,
+  status?: string
+): Promise<Sale[]> => {
+  try {
+    const butcheryId = await getCurrentButcheryId();
+    const salesRef = collection(db, 'butcheries', butcheryId, 'sales');
+    
+    // Build query with filters
+    const queryConstraints: QueryConstraint[] = [];
+    
+    if (startDate) {
+      queryConstraints.push(where('date', '>=', startDate));
+    }
+    if (endDate) {
+      queryConstraints.push(where('date', '<=', endDate));
+    }
+    if (status) {
+      queryConstraints.push(where('status', '==', status));
+    }
+    
+    // Order by date descending and limit
+    queryConstraints.push(orderBy('date', 'desc'));
+    queryConstraints.push(limitQuery(limitCount));
+    
+    const q = query(salesRef, ...queryConstraints);
+    const querySnapshot = await getDocs(q);
+    
+    const sales: Sale[] = [];
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      sales.push({
+        id: doc.id,
+        date: data.date?.toDate() || new Date(),
+        totalAmount: data.totalAmount || 0,
+        totalItems: data.totalItems || 0,
+        totalQuantity: data.totalQuantity || 0,
+        status: data.status || 'completed',
+        createdAt: data.createdAt?.toDate() || new Date(),
+        updatedAt: data.updatedAt?.toDate() || new Date(),
+        notes: data.notes
+      });
+    });
+    
+    console.log(`✅ Fetched ${sales.length} sales from Firebase`);
+    return sales;
+    
+  } catch (error) {
+    console.error('❌ Error fetching sales history:', error);
+    throw new Error('Error al obtener el historial de ventas');
+  }
+};
+
+/**
+ * Get a specific sale with its items
+ */
+export const getSaleWithItems = async (saleId: string): Promise<SaleWithItems> => {
+  try {
+    const butcheryId = await getCurrentButcheryId();
+    
+    // Get sale document
+    const saleDocRef = doc(db, 'butcheries', butcheryId, 'sales', saleId);
+    const saleDoc = await getDoc(saleDocRef);
+    
+    if (!saleDoc.exists()) {
+      throw new Error('Venta no encontrada');
+    }
+    
+    const saleData = saleDoc.data();
+    const sale: Sale = {
+      id: saleDoc.id,
+      date: saleData.date?.toDate() || new Date(),
+      totalAmount: saleData.totalAmount || 0,
+      totalItems: saleData.totalItems || 0,
+      totalQuantity: saleData.totalQuantity || 0,
+      status: saleData.status || 'completed',
+      createdAt: saleData.createdAt?.toDate() || new Date(),
+      updatedAt: saleData.updatedAt?.toDate() || new Date(),
+      notes: saleData.notes
+    };
+    
+    // Get items subcollection
+    const itemsRef = collection(saleDocRef, 'items');
+    const itemsSnapshot = await getDocs(itemsRef);
+    
+    const items: SaleItem[] = [];
+    itemsSnapshot.forEach((doc) => {
+      const data = doc.data();
+      items.push({
+        id: doc.id,
+        productId: data.productId || '',
+        productName: data.productName || '',
+        quantity: data.quantity || 0,
+        unitPrice: data.unitPrice || 0,
+        subtotal: data.subtotal || 0,
+        category: data.category || '',
+        createdAt: data.createdAt?.toDate() || new Date()
+      });
+    });
+    
+    console.log(`✅ Fetched sale ${saleId} with ${items.length} items`);
+    return { ...sale, items };
+    
+  } catch (error) {
+    console.error('❌ Error fetching sale with items:', error);
+    throw new Error('Error al obtener los detalles de la venta');
+  }
+};
+
+/**
+ * Update sale status and handle stock changes
+ */
+export const updateSaleStatus = async (
+  saleId: string, 
+  newStatus: 'completed' | 'pending' | 'cancelled',
+  currentStatus: 'completed' | 'pending' | 'cancelled'
+): Promise<{ needsStockUpdate: boolean; saleItems?: SaleItem[] }> => {
+  try {
+    const butcheryId = await getCurrentButcheryId();
+    const saleDocRef = doc(db, 'butcheries', butcheryId, 'sales', saleId);
+    
+    // Determine if we need to update stock
+    const shouldDeductStock = (currentStatus === 'pending' || currentStatus === 'cancelled') && newStatus === 'completed';
+    const shouldRestoreStock = currentStatus === 'completed' && (newStatus === 'pending' || newStatus === 'cancelled');
+    
+    let saleItems: SaleItem[] = [];
+    
+    // If we need to modify stock, get the sale items first
+    if (shouldDeductStock || shouldRestoreStock) {
+      const itemsRef = collection(saleDocRef, 'items');
+      const itemsSnapshot = await getDocs(itemsRef);
+      
+      saleItems = [];
+      itemsSnapshot.forEach((doc) => {
+        const data = doc.data();
+        saleItems.push({
+          id: doc.id,
+          productId: data.productId || '',
+          productName: data.productName || '',
+          quantity: data.quantity || 0,
+          unitPrice: data.unitPrice || 0,
+          subtotal: data.subtotal || 0,
+          category: data.category || '',
+          createdAt: data.createdAt?.toDate() || new Date()
+        });
+      });
+    }
+    
+    // Update the sale status
+    await updateDoc(saleDocRef, {
+      status: newStatus,
+      updatedAt: serverTimestamp()
+    });
+    
+    console.log(`✅ Sale status updated: ${saleId} -> ${newStatus}`);
+    
+    return {
+      needsStockUpdate: shouldDeductStock || shouldRestoreStock,
+      saleItems: shouldDeductStock || shouldRestoreStock ? saleItems : undefined
+    };
+    
+  } catch (error) {
+    console.error('❌ Error updating sale status:', error);
+    throw new Error('Error al actualizar el estado de la venta');
+  }
+};
+
 export default {
   fetchProductsFromFirebase,
   addProductToFirebase,
@@ -430,5 +692,9 @@ export default {
   updateProductPriceInFirebase,
   updateProductNameInFirebase,
   updateProductStockInFirebase,
-  uploadImageToImgBB
+  uploadImageToImgBB,
+  createSale,
+  getSalesHistory,
+  getSaleWithItems,
+  updateSaleStatus
 };
