@@ -164,8 +164,8 @@ Proceso:
 ```typescript
 // Toast con resumen detallado
 toast.success(
-  `✅ Stock agregado exitosamente!\n\nProductos actualizados:\n${summary}`,
-  { autoClose: 4000 }
+  `✅ Stock agregado exitosamente`,
+  { autoClose: 1000 }
 );
 
 // Ejemplo de summary:
@@ -174,9 +174,6 @@ toast.success(
 // • Chorizo: +10
 ```
 
-### **🔍 Logs Detallados:**
-```javascript
-console.log(`📦 Stock agregado: ${product.name} (${currentStock} + ${quantityToAdd} = ${newStock})`);
 
 // Ejemplo:
 // 📦 Stock agregado: Asado de Tira (5 + 20 = 25)
