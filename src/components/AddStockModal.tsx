@@ -146,59 +146,60 @@ export const AddStockModal: React.FC<AddStockModalProps> = ({ isOpen, onClose })
 
   return createPortal(
     <div 
-      className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+      className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm flex items-center justify-center p-2 md:p-4"
       onClick={(e) => e.target === e.currentTarget && handleClose()}
     >
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[95vh] flex flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Package className="w-6 h-6 text-blue-600" />
+      <div className="bg-white rounded-xl md:rounded-2xl shadow-2xl w-full max-w-6xl max-h-[98vh] md:max-h-[95vh] flex flex-col">
+        {/* Header - Optimizado para móvil */}
+        <div className="flex items-center justify-between p-3 md:p-6 border-b border-gray-200">
+          <div className="flex items-center gap-2 md:gap-3">
+            <div className="p-1.5 md:p-2 bg-blue-100 rounded-lg">
+              <Package className="w-5 h-5 md:w-6 md:h-6 text-blue-600" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">Agregar Stock</h2>
-              <p className="text-sm text-gray-600">Aumenta el inventario de productos existentes</p>
+              <h2 className="text-lg md:text-2xl font-bold text-gray-900">Agregar Stock</h2>
+              <p className="text-xs md:text-sm text-gray-600 hidden sm:block">Aumenta el inventario de productos existentes</p>
             </div>
           </div>
           <button
             onClick={handleClose}
-            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-1.5 md:p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
           >
-            <X className="w-6 h-6" />
+            <X className="w-5 h-5 md:w-6 md:h-6" />
           </button>
         </div>
 
-        {/* Content */}
-        <div className="flex-1 flex flex-col md:flex-row min-h-0">
+        {/* Content - Altura fija como SalesModal */}
+        <div className="flex flex-col h-[calc(95vh-8rem)]">
+          <div className="flex flex-1 overflow-hidden flex-col md:flex-row">
           {/* Products List */}
           <div className="flex-1 flex flex-col min-h-0">
-            {/* Search */}
-            <div className="p-4 border-b border-gray-200">
+            {/* Search - Optimizado para móvil */}
+            <div className="p-3 md:p-4 border-b border-gray-200">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 md:h-5 md:w-5 text-gray-400" />
                 <input
                   type="text"
                   placeholder="Buscar productos..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full pl-9 md:pl-10 pr-4 py-2.5 md:py-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
             </div>
 
-            {/* Products Grid */}
-            <div className="flex-1 overflow-y-auto p-4">
+            {/* Products Grid - Optimizado para móvil con altura fija */}
+            <div className="flex-1 overflow-y-auto p-3 md:p-4 md:max-h-none max-h-64">
               {filteredProducts.length === 0 ? (
-                <div className="text-center py-12">
-                  <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No hay productos</h3>
-                  <p className="text-gray-500">
+                <div className="text-center py-8 md:py-12">
+                  <Package className="w-12 h-12 md:w-16 md:h-16 text-gray-300 mx-auto mb-3 md:mb-4" />
+                  <h3 className="text-base md:text-lg font-medium text-gray-900 mb-2">No hay productos</h3>
+                  <p className="text-sm text-gray-500">
                     {searchTerm ? 'No se encontraron productos con ese nombre' : 'No hay productos disponibles'}
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 md:gap-3">
                   {filteredProducts.map((product) => {
                     const stockToAdd = getStockToAdd(product.id);
                     const isSelected = stockToAdd > 0;
@@ -305,7 +306,7 @@ export const AddStockModal: React.FC<AddStockModalProps> = ({ isOpen, onClose })
           </div>
 
           {/* Summary Sidebar */}
-          <div className="w-full md:w-80 bg-gray-50 border-l border-gray-200 flex flex-col">
+          <div className="w-full md:w-80 border-t md:border-t-0 md:border-l border-gray-200 bg-gray-50 overflow-y-auto flex-shrink-0">
             <div className="p-4 border-b border-gray-200">
               <h3 className="font-semibold text-gray-900">Resumen de Stock</h3>
               <p className="text-sm text-gray-600 mt-1">
@@ -367,23 +368,26 @@ export const AddStockModal: React.FC<AddStockModalProps> = ({ isOpen, onClose })
                       : 'bg-gradient-to-r from-blue-600 to-indigo-500 hover:from-blue-700 hover:to-indigo-600 text-white hover:scale-105 shadow-lg hover:shadow-xl'
                   }`}
                 >
-                  {isProcessing ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-500"></div>
-                      Procesando...
-                    </>
-                  ) : (
-                    <>
-                      <Plus className="w-4 h-4" />
-                      Agregar Stock ({stockUpdates.size})
-                    </>
-                  )}
+                                          {isProcessing ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white border-opacity-30"></div>
+                            <span className="hidden sm:inline">Procesando...</span>
+                            <span className="sm:hidden">...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Plus className="w-4 h-4" />
+                            <span className="hidden sm:inline">Agregar Stock ({stockUpdates.size})</span>
+                            <span className="sm:hidden">+{stockUpdates.size}</span>
+                          </>
+                        )}
                 </button>
                 <p className="text-xs text-gray-500 text-center mt-2">
                   Se actualizará el inventario automáticamente
                 </p>
               </div>
             )}
+          </div>
           </div>
         </div>
       </div>

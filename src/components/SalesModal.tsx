@@ -259,39 +259,39 @@ export const SalesModal: React.FC<SalesModalProps> = ({ isOpen, onClose }) => {
       className="bg-white rounded-xl md:rounded-2xl shadow-2xl w-full max-w-6xl max-h-[95vh] overflow-hidden animate-scale-in border border-gray-200"
       onClick={(e) => e.stopPropagation()}
     >
-        {/* Header */}
-        <div className="bg-gradient-to-r from-green-600 to-emerald-500 p-6 text-white">
+        {/* Header - Optimizado para móvil */}
+        <div className="bg-gradient-to-r from-green-600 to-emerald-500 p-3 md:p-6 text-white">
           <div className="flex justify-between items-center">
             <div>
-              <h2 className="text-2xl font-bold font-lobster flex items-center gap-2">
-                <ShoppingCart className="w-7 h-7" />
+              <h2 className="text-lg md:text-2xl font-bold font-lobster flex items-center gap-1.5 md:gap-2">
+                <ShoppingCart className="w-5 h-5 md:w-7 md:h-7" />
                 Nueva Venta
               </h2>
-              <p className="text-white/90 text-sm">
+              <p className="text-white/90 text-xs md:text-sm hidden sm:block">
                 Busca y selecciona productos para vender
               </p>
             </div>
             <button 
               onClick={handleClose}
-              className="p-2 hover:bg-white/20 rounded-xl transition-all duration-200 hover:scale-110"
+              className="p-1.5 md:p-2 hover:bg-white/20 rounded-lg md:rounded-xl transition-all duration-200 hover:scale-110"
               aria-label="Cerrar modal de ventas"
             >
-              <X className="w-6 h-6" />
+              <X className="w-5 h-5 md:w-6 md:h-6" />
             </button>
           </div>
         </div>
 
         <div className="flex flex-col h-[calc(95vh-8rem)]">
-          {/* Search Bar */}
-          <div className="p-4 md:p-6 border-b border-gray-200 bg-gray-50">
+          {/* Search Bar - Optimizado para móvil */}
+          <div className="p-3 md:p-4 lg:p-6 border-b border-gray-200 bg-gray-50">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 md:h-5 md:w-5 text-gray-400" />
               <input
                 type="text"
                 placeholder="Buscar productos..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white shadow-sm"
+                className="w-full pl-9 md:pl-10 pr-4 py-2.5 md:py-3 border border-gray-300 rounded-lg md:rounded-xl text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white shadow-sm"
                 autoFocus
               />
             </div>
@@ -339,7 +339,7 @@ export const SalesModal: React.FC<SalesModalProps> = ({ isOpen, onClose }) => {
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3 lg:gap-4">
                   {filteredProducts.map((product) => {
                     const isSelected = selectedItems.has(product.id);
                     const stock = product.stock || 0;
@@ -347,44 +347,45 @@ export const SalesModal: React.FC<SalesModalProps> = ({ isOpen, onClose }) => {
                     return (
                       <div
                         key={product.id}
-                        className={`border-2 rounded-lg md:rounded-xl p-3 md:p-4 transition-all duration-200 cursor-pointer hover:shadow-md ${
+                        className={`border-2 rounded-lg p-2 md:p-3 transition-all duration-200 cursor-pointer hover:shadow-md ${
                           isSelected 
                             ? 'border-green-500 bg-green-50 shadow-sm' 
                             : 'border-gray-200 hover:border-green-300 hover:bg-green-50'
                         }`}
                         onClick={() => !isSelected && addToSale(product)}
                       >
-                        <div className="flex items-center gap-3">
-                          <div className="relative flex-shrink-0">
+                        {/* Layout vertical en móvil, horizontal en desktop */}
+                        <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-3">
+                          <div className="relative flex-shrink-0 mx-auto md:mx-0">
                             <img
                               src={product.image}
                               alt={product.name}
-                              className="w-12 h-12 md:w-16 md:h-16 object-cover rounded-lg shadow-soft"
+                              className="w-10 h-10 md:w-12 md:h-12 object-cover rounded-lg shadow-soft"
                             />
                             {isSelected && (
-                              <div className="absolute -top-1 -right-1 bg-green-500 rounded-full p-1">
-                                <CheckCircle className="w-3 h-3 text-white" />
+                              <div className="absolute -top-1 -right-1 bg-green-500 rounded-full p-0.5">
+                                <CheckCircle className="w-2.5 h-2.5 md:w-3 md:h-3 text-white" />
                               </div>
                             )}
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-semibold text-gray-800 text-sm md:text-base truncate leading-tight">
+                          <div className="flex-1 min-w-0 text-center md:text-left">
+                            <h4 className="font-semibold text-gray-800 text-xs md:text-sm truncate leading-tight">
                               {product.name}
                             </h4>
-                            <p className="text-xs md:text-sm text-gray-600 mt-1">
-                              ${formatPrice(getNumericPrice(product.price))}/unidad
+                            <p className="text-[10px] md:text-xs text-gray-600 mt-0.5 md:mt-1">
+                              ${formatPrice(getNumericPrice(product.price))}
                             </p>
-                            <div className="flex items-center justify-between mt-2">
-                              <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                            <div className="flex flex-col md:flex-row md:items-center md:justify-between mt-1 md:mt-2 gap-1 md:gap-0">
+                              <span className={`text-[9px] md:text-xs px-1.5 py-0.5 md:px-2 md:py-1 rounded-full font-medium inline-block ${
                                 stock > 10 ? 'bg-green-100 text-green-800' :
                                 stock > 5 ? 'bg-yellow-100 text-yellow-800' :
                                 stock > 0 ? 'bg-orange-100 text-orange-800' :
                                 'bg-red-100 text-red-800'
                               }`}>
-                                {stock} en stock
+                                {stock}
                               </span>
                               {!isSelected && (
-                                <Plus className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                                <Plus className="w-3 h-3 md:w-4 md:h-4 text-gray-400 flex-shrink-0 mx-auto md:mx-0" />
                               )}
                             </div>
                           </div>

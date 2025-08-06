@@ -184,59 +184,63 @@ export const AdminProducts: React.FC = () => {
   
   return (
     <div className="container mx-auto p-4 sm:p-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 gap-4">
-        <h1 className="text-2xl sm:text-3xl font-bold">
+      {/* Header - Optimizado para móvil */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 sm:mb-6 gap-3 sm:gap-4">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">
           Panel de Administración
         </h1>
         {activeTab === 'products' && (
-          <div className="flex gap-3">
+          <div className="flex gap-2 sm:gap-3">
             <button
               onClick={() => setIsAddStockModalOpen(true)}
-              className="bg-gradient-to-r from-blue-600 to-indigo-500 hover:from-blue-700 hover:to-indigo-600 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 hover:scale-105 shadow-lg flex items-center justify-center gap-2"
+              className="bg-gradient-to-r from-blue-600 to-indigo-500 hover:from-blue-700 hover:to-indigo-600 text-white px-3 py-2 sm:px-4 sm:py-2.5 md:px-6 md:py-3 rounded-lg sm:rounded-xl font-semibold transition-all duration-200 hover:scale-105 shadow-lg flex items-center justify-center gap-1 sm:gap-2 text-sm sm:text-base"
             >
-              <Package className="w-5 h-5" />
-              Agregar Stock
+              <Package className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span className="hidden sm:inline">Agregar Stock</span>
+              <span className="sm:hidden">Stock</span>
             </button>
             <button
               onClick={() => setIsSalesModalOpen(true)}
-              className="bg-gradient-to-r from-green-600 to-emerald-500 hover:from-green-700 hover:to-emerald-600 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-200 hover:scale-105 shadow-lg flex items-center justify-center gap-2"
+              className="bg-gradient-to-r from-green-600 to-emerald-500 hover:from-green-700 hover:to-emerald-600 text-white px-3 py-2 sm:px-4 sm:py-2.5 md:px-6 md:py-3 rounded-lg sm:rounded-xl font-semibold transition-all duration-200 hover:scale-105 shadow-lg flex items-center justify-center gap-1 sm:gap-2 text-sm sm:text-base"
             >
-              <ShoppingCartIcon className="w-5 h-5" />
-              Nueva Venta
+              <ShoppingCartIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span className="hidden sm:inline">Nueva Venta</span>
+              <span className="sm:hidden">Venta</span>
             </button>
           </div>
         )}
       </div>
 
-      {/* Tabs */}
-      <div className="mb-6">
+      {/* Tabs - Optimizado para móvil */}
+      <div className="mb-4 md:mb-6">
         <div className="border-b border-gray-200">
-          <nav className="-mb-px flex space-x-8">
+          <nav className="-mb-px flex space-x-4 sm:space-x-8">
             <button
               onClick={() => setActiveTab('products')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+              className={`py-3 md:py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                 activeTab === 'products'
                   ? 'border-blue-500 text-blue-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
-              <div className="flex items-center gap-2">
-                <CubeIcon className="w-5 h-5" />
-                Gestión de Productos
+              <div className="flex items-center gap-1 sm:gap-2">
+                <CubeIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span className="hidden sm:inline">Gestión de Productos</span>
+                <span className="sm:hidden">Productos</span>
               </div>
             </button>
             <button
               onClick={() => setActiveTab('sales')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+              className={`py-3 md:py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                 activeTab === 'sales'
                   ? 'border-blue-500 text-blue-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
-              <div className="flex items-center gap-2">
-                <ClockIcon className="w-5 h-5" />
-                Historial de Ventas
+              <div className="flex items-center gap-1 sm:gap-2">
+                <ClockIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span className="hidden sm:inline">Historial de Ventas</span>
+                <span className="sm:hidden">Ventas</span>
               </div>
             </button>
           </nav>
@@ -246,51 +250,58 @@ export const AdminProducts: React.FC = () => {
       {/* Tab Content */}
       {activeTab === 'products' ? (
         <div className="space-y-4">
-          {/* Search and filters */}
-          <div className="mb-4 flex items-center space-x-4">
-            <div className="relative w-full max-w-md">
+          {/* Search and filters - Optimizado para móvil */}
+          <div className="mb-4 space-y-3 md:space-y-0 md:flex md:items-center md:space-x-4">
+            {/* Búsqueda - Ancho completo en móvil */}
+            <div className="relative w-full md:max-w-md">
               <input
                 type="text"
                 placeholder="Buscar productos..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-9 pr-4 py-2.5 md:py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
-              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 md:h-5 md:w-5 text-gray-400" />
             </div>
-            <div className="relative">
-              <select
-                value={selectedCategory || ''}
-                onChange={(e) => setSelectedCategory(e.target.value || null)}
-                className="bg-white border rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            
+            {/* Filtros y botón - Flex en una fila en móvil */}
+            <div className="flex gap-2 md:gap-4">
+              <div className="relative flex-1 md:flex-none">
+                <select
+                  value={selectedCategory || ''}
+                  onChange={(e) => setSelectedCategory(e.target.value || null)}
+                  className="w-full bg-white border rounded-lg px-3 py-2.5 md:px-4 md:py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Todas</option>
+                  {Array.from(new Set(state.products.map(p => p.category))).map(category => (
+                    <option key={category} value={category}>{category}</option>
+                  ))}
+                </select>
+              </div>
+              
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="bg-green-500 hover:bg-green-600 text-white px-3 py-2.5 md:px-4 md:py-2 rounded-lg text-sm flex items-center space-x-1 md:space-x-2 flex-shrink-0"
               >
-                <option value="">Todas las categorías</option>
-                {Array.from(new Set(state.products.map(p => p.category))).map(category => (
-                  <option key={category} value={category}>{category}</option>
-                ))}
-              </select>
+                <PlusIcon className="h-4 w-4" />
+                <span className="hidden md:inline">Agregar</span>
+                <span className="md:hidden">+</span>
+              </button>
             </div>
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm flex items-center space-x-2"
-            >
-              <PlusIcon className="h-4 w-4" />
-              <span>Agregar</span>
-            </button>
           </div>
 
           {/* Products grid */}
           {state.loading ? (
             <div className="text-center">Cargando productos...</div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2 md:gap-3">
               {filteredProducts.map((product) => (
-                <div key={product.id} className="bg-white border rounded-lg p-3 shadow-sm">
-                  <div className="relative mb-3">
+                <div key={product.id} className="bg-white border rounded-lg p-2 md:p-3 shadow-sm">
+                  <div className="relative mb-2 md:mb-3">
                     <img
                       src={product.image}
                       alt={product.name}
-                      className="w-full h-32 object-contain rounded-lg"
+                      className="w-full h-20 md:h-32 object-contain rounded-lg"
                       loading="lazy"
                     />
                     {editingImageId === product.id && (
@@ -317,7 +328,7 @@ export const AdminProducts: React.FC = () => {
                     </button>
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-1 md:space-y-2">
                     {/* Product name */}
                     {editingNameId === product.id ? (
                       <div className="flex items-center space-x-1">
@@ -325,18 +336,18 @@ export const AdminProducts: React.FC = () => {
                           type="text"
                           value={newName}
                           onChange={(e) => setNewName(e.target.value)}
-                          className="flex-1 border rounded px-2 py-1 text-sm"
+                          className="flex-1 border rounded px-1 py-1 text-xs md:text-sm"
                           onKeyPress={(e) => e.key === 'Enter' && handleUpdateProductName(product.id)}
                         />
                         <button
                           onClick={() => handleUpdateProductName(product.id)}
-                          className="bg-green-500 text-white px-2 py-1 rounded text-xs"
+                          className="bg-green-500 text-white px-1.5 py-1 rounded text-xs"
                         >
                           ✓
                         </button>
                         <button
                           onClick={() => setEditingNameId(null)}
-                          className="bg-gray-500 text-white px-2 py-1 rounded text-xs"
+                          className="bg-gray-500 text-white px-1.5 py-1 rounded text-xs"
                         >
                           ✕
                         </button>
@@ -349,10 +360,10 @@ export const AdminProducts: React.FC = () => {
                           setNewName(product.name);
                         }}
                       >
-                        <h3 className="font-semibold text-sm leading-tight">
+                        <h3 className="font-semibold text-xs md:text-sm leading-tight">
                           {product.name}
                         </h3>
-                        <PencilIcon className="h-3 w-3 text-gray-400 group-hover:text-blue-500 transition-colors flex-shrink-0" />
+                        <PencilIcon className="h-2.5 w-2.5 md:h-3 md:w-3 text-gray-400 group-hover:text-blue-500 transition-colors flex-shrink-0" />
                       </div>
                     )}
 
@@ -363,19 +374,19 @@ export const AdminProducts: React.FC = () => {
                           type="text"
                           value={newPrice}
                           onChange={(e) => setNewPrice(e.target.value)}
-                          className="flex-1 border rounded px-2 py-1 text-sm"
+                          className="flex-1 border rounded px-1 py-1 text-xs md:text-sm"
                           onKeyPress={(e) => e.key === 'Enter' && handleUpdateProductPrice(product.id)}
                           placeholder="Nuevo precio"
                         />
                         <button
                           onClick={() => handleUpdateProductPrice(product.id)}
-                          className="bg-green-500 text-white px-2 py-1 rounded text-xs"
+                          className="bg-green-500 text-white px-1.5 py-1 rounded text-xs"
                         >
                           ✓
                         </button>
                         <button
                           onClick={() => setEditingPriceId(null)}
-                          className="bg-gray-500 text-white px-2 py-1 rounded text-xs"
+                          className="bg-gray-500 text-white px-1.5 py-1 rounded text-xs"
                         >
                           ✕
                         </button>
@@ -388,59 +399,62 @@ export const AdminProducts: React.FC = () => {
                           setNewPrice(typeof product.price === 'number' ? product.price.toString() : product.price);
                         }}
                       >
-                        <p className="text-lg font-bold text-green-600">
+                        <p className="text-sm md:text-lg font-bold text-green-600">
                           ${formatPrice(typeof product.price === 'number' ? product.price : parseFloat(product.price))}
                         </p>
-                        <PencilIcon className="h-3 w-3 text-gray-400 group-hover:text-green-500 transition-colors flex-shrink-0" />
+                        <PencilIcon className="h-2.5 w-2.5 md:h-3 md:w-3 text-gray-400 group-hover:text-green-500 transition-colors flex-shrink-0" />
                       </div>
                     )}
 
                     <div className="flex items-center justify-between">
-                      <p className="text-xs text-gray-600">{product.category}</p>
-                      <p className="text-xs text-gray-600">Stock: {product.stock || 0}</p>
+                      <p className="text-[10px] md:text-xs text-gray-600">{product.category}</p>
+                      <p className="text-[10px] md:text-xs text-gray-600">Stock: {product.stock || 0}</p>
                     </div>
 
-                    {/* Product controls */}
-                    <div className="flex items-center justify-between pt-2">
-                      <div className="flex flex-wrap gap-1">
-                        <button
-                          onClick={() => handleToggleProductStatus(product.id)}
-                          className={clsx(
-                            'px-2 py-1 rounded text-xs font-medium',
-                            product.active 
-                              ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                              : 'bg-red-100 text-red-800 hover:bg-red-200'
-                          )}
-                        >
-                          {product.active ? 'Activo' : 'Inactivo'}
-                        </button>
+                    {/* Product controls - Optimizado para móvil */}
+                    <div className="flex flex-col gap-1 pt-1 md:pt-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex gap-1">
+                          <button
+                            onClick={() => handleToggleProductStatus(product.id)}
+                            className={clsx(
+                              'px-1.5 py-0.5 md:px-2 md:py-1 rounded text-[10px] md:text-xs font-medium',
+                              product.active 
+                                ? 'bg-green-100 text-green-800 hover:bg-green-200'
+                                : 'bg-red-100 text-red-800 hover:bg-red-200'
+                            )}
+                          >
+                            {product.active ? 'Activo' : 'Inactivo'}
+                          </button>
+
+                          <button
+                            onClick={() => handleToggleProductOffer(product.id)}
+                            className={clsx(
+                              'px-1.5 py-0.5 md:px-2 md:py-1 rounded text-[10px] md:text-xs font-medium',
+                              product.offer
+                                ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
+                                : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                            )}
+                          >
+                            {product.offer ? (
+                              <div className="flex items-center space-x-0.5">
+                                <SparklesIcon className="h-2.5 w-2.5 md:h-3 md:w-3" />
+                                <span className="hidden md:inline">Oferta</span>
+                                <span className="md:hidden">★</span>
+                              </div>
+                            ) : (
+                              <span className="hidden md:inline">Sin oferta</span>
+                            )}
+                          </button>
+                        </div>
 
                         <button
-                          onClick={() => handleToggleProductOffer(product.id)}
-                          className={clsx(
-                            'px-2 py-1 rounded text-xs font-medium',
-                            product.offer
-                              ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
-                              : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-                          )}
+                          onClick={() => setDeleteModalProductId(product.id)}
+                          className="text-red-500 hover:text-red-700 p-0.5 md:p-1"
                         >
-                          {product.offer ? (
-                            <div className="flex items-center space-x-1">
-                              <SparklesIcon className="h-3 w-3" />
-                              <span>Oferta</span>
-                            </div>
-                          ) : (
-                            'Sin oferta'
-                          )}
+                          <TrashIcon className="h-2.5 w-2.5 md:h-3 md:w-3" />
                         </button>
                       </div>
-
-                      <button
-                        onClick={() => setDeleteModalProductId(product.id)}
-                        className="text-red-500 hover:text-red-700 p-1"
-                      >
-                        <TrashIcon className="h-3 w-3" />
-                      </button>
                     </div>
                   </div>
                 </div>
