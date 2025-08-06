@@ -30,25 +30,23 @@ export const ProductSelectionCard: React.FC<ProductSelectionCardProps> = ({
     >
       {/* Desktop 5-column layout vs Mobile horizontal layout */}
       <div className="flex md:flex-col items-center md:items-start gap-3 md:gap-2">
-        <div className="relative flex-shrink-0">
+        <div className="flex items-center gap-2">
           <img
             src={product.image}
             alt={product.name}
-            className="w-12 h-12 md:w-full md:h-24 lg:h-20 object-cover rounded-lg shadow-soft"
+            className="h-12 md:h-24 lg:h-20 w-20 object-cover rounded-lg shadow-soft"
           />
-          {isSelected && (
-            <div className="absolute -top-1 -right-1 bg-green-500 rounded-full p-0.5">
-              <CheckCircle className="w-3 h-3 text-white" />
-            </div>
-          )}
-        </div>
-        <div className="flex-1 md:w-full min-w-0">
+          <div className="flex flex-col">
           <h4 className="font-bold text-gray-800 text-sm md:text-xs lg:text-sm mb-1 leading-tight line-clamp-2">
             {product.name}
           </h4>
           <p className="text-sm md:text-xs lg:text-sm text-green-600 font-semibold mb-2">
             ${formatPrice(getNumericPrice(product.price))}
           </p>
+          </div>
+        </div>
+        <div className="flex-1 md:w-full min-w-0">
+          
           <div className="flex items-center justify-between md:justify-center lg:justify-between gap-2">
             <span className={`text-xs px-2 py-1 rounded-full font-medium flex-shrink-0 ${
               stock > 10 ? 'bg-green-100 text-green-800' :
