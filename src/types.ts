@@ -7,6 +7,7 @@ export interface Product {
   description?: string;
   active: boolean;
   offer?: boolean;  // Added optional offer property
+  stock?: number;  // Added stock property
 }
 
 export interface CartItem extends Product {

@@ -61,16 +61,10 @@ const convertFileToBase64 = (file: File): Promise<string> => {
 };
 
 /**
- * Upload image to ImgBB
+ * Upload image to ImgBB (usando el método exacto que funciona)
  */
 export const uploadImageToImgBB = async (file: File): Promise<string> => {
   try {
-    console.log('📤 Starting image upload to ImgBB...', {
-      fileName: file.name,
-      fileSize: file.size,
-      fileType: file.type
-    });
-    
     // Convertir el archivo a cadena base64
     const base64Image = await convertFileToBase64(file);
     // Remover el prefijo "data:image/*;base64," si existe
@@ -80,31 +74,15 @@ export const uploadImageToImgBB = async (file: File): Promise<string> => {
     formData.append("image", base64Data);
     formData.append("key", "9a2d7bbb99f1b945a192fcbbcf11c4af");
 
-    console.log('⬆️ Uploading to ImgBB...');
-    
     // Usar dynamic import para evitar problemas de bundling
     const axios = (await import('axios')).default;
     
-    const response = await axios.post("https://api.imgbb.com/1/upload", formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      },
-      timeout: 30000 // 30 segundos timeout
-    });
+    const response = await axios.post("https://api.imgbb.com/1/upload", formData);
     
-    if (response.data?.success && response.data?.data?.url) {
-      console.log('✅ Image uploaded to ImgBB:', response.data.data.url);
-      return response.data.data.url;
-    } else {
-      throw new Error('ImgBB upload failed: ' + JSON.stringify(response.data));
-    }
+    return response.data.data.url || '';
   } catch (error) {
-    console.error('❌ Error uploading image to ImgBB:', error);
-    if (error instanceof Error) {
-      throw new Error(`Error al subir la imagen: ${error.message}`);
-    } else {
-      throw new Error('Error al subir la imagen');
-    }
+    console.error('Error uploading image to ImgBB:', JSON.stringify(error, null, 2));
+    return '';
   }
 };
 
@@ -148,7 +126,8 @@ export const fetchProductsFromFirebase = async (): Promise<Product[]> => {
         image: data.image || '',
         active: data.active ?? true,
         offer: data.isOffer ?? data.offer ?? false,
-        description: data.description || ''
+        description: data.description || '',
+        stock: data.stock ?? 0
       });
     });
     
@@ -169,6 +148,7 @@ export const addProductToFirebase = async (productData: {
   category: string;
   image: File;
   offer?: boolean;
+  stock?: number;
 }): Promise<Product> => {
   try {
     const butcheryId = await getCurrentButcheryId();
@@ -187,6 +167,7 @@ export const addProductToFirebase = async (productData: {
       active: true,
       offer: productData.offer || false,
       isOffer: productData.offer || false, // Keep both for compatibility
+      stock: productData.stock ?? 10, // Default stock of 10
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
     };
@@ -202,7 +183,8 @@ export const addProductToFirebase = async (productData: {
       category: newProductData.category,
       image: newProductData.image,
       active: newProductData.active,
-      offer: newProductData.offer
+      offer: newProductData.offer,
+      stock: newProductData.stock
     };
     
     console.log('✅ Product added to Firebase:', newProduct.name);
@@ -414,6 +396,29 @@ export const updateProductNameInFirebase = async (
   }
 };
 
+/**
+ * Update product stock
+ */
+export const updateProductStockInFirebase = async (
+  productId: string, 
+  newStock: number
+): Promise<void> => {
+  try {
+    const butcheryId = await getCurrentButcheryId();
+    const productRef = doc(db, 'butcheries', butcheryId, 'products', productId);
+    
+    await updateDoc(productRef, {
+      stock: newStock,
+      updatedAt: serverTimestamp()
+    });
+    
+    console.log('✅ Product stock updated in Firebase:', productId, 'New stock:', newStock);
+  } catch (error) {
+    console.error('❌ Error updating product stock in Firebase:', error);
+    throw new Error('Error al actualizar stock del producto');
+  }
+};
+
 export default {
   fetchProductsFromFirebase,
   addProductToFirebase,
@@ -424,5 +429,6 @@ export default {
   toggleProductOfferInFirebase,
   updateProductPriceInFirebase,
   updateProductNameInFirebase,
+  updateProductStockInFirebase,
   uploadImageToImgBB
 };

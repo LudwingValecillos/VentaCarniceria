@@ -3,7 +3,6 @@ import React, { useState, useMemo, useEffect } from 'react';
 import 'react-toastify/dist/ReactToastify.css';
 import { PencilIcon, MagnifyingGlassIcon, SparklesIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/solid';
 import { useProductContext, safeToast } from '../context/ProductContext';
-import { addNewProduct } from '../data/api';
 import clsx from 'clsx';
 
 // Toast configuration is now handled by safeToast function
@@ -14,6 +13,7 @@ export const AdminProducts: React.FC = () => {
     toggleProductStatusAction,
     updateProductPriceAction,
     fetchProductsAction,
+    addProductAction,
     toggleProductOfferAction,
     updateProductNameAction,
     deleteProductAction,
@@ -58,7 +58,6 @@ export const AdminProducts: React.FC = () => {
   const handleToggleProductStatus = async (productId: string) => {
     try {
       await toggleProductStatusAction(productId);
-      await fetchProductsAction(); // Refresh the products list
       safeToast('Estado del producto actualizado', 'success');
     } catch {
       safeToast('Error al cambiar el estado del producto', 'error');
@@ -70,7 +69,6 @@ export const AdminProducts: React.FC = () => {
     if (!isNaN(numericPrice)) {
       try {
         await updateProductPriceAction(productId, numericPrice);
-        await fetchProductsAction(); // Refresh the products list
         setEditingPriceId(null);
         safeToast('Precio actualizado exitosamente', 'success');
       } catch {
@@ -83,7 +81,6 @@ export const AdminProducts: React.FC = () => {
     if (newName.trim()) {
       try {
         await updateProductNameAction(productId, newName.trim());
-        await fetchProductsAction(); // Refresh the products list
         setEditingNameId(null);
         safeToast('Nombre actualizado exitosamente', 'success');
       } catch {
@@ -95,7 +92,6 @@ export const AdminProducts: React.FC = () => {
   const handleToggleProductOffer = async (productId: string) => {
     try {
       await toggleProductOfferAction(productId);
-      await fetchProductsAction(); // Refresh the products list
       safeToast('Estado de oferta actualizado', 'success');
     } catch {
       safeToast('Error al cambiar el estado de oferta', 'error');
@@ -122,7 +118,7 @@ export const AdminProducts: React.FC = () => {
     try {
       // TypeScript assertion is safe here because we checked for null above
       const productImage = newProductImage!;
-      await addNewProduct({
+      await addProductAction({
         name: newProductName,
         price: newProductPrice,
         category: newProductCategory,
@@ -136,7 +132,7 @@ export const AdminProducts: React.FC = () => {
       setNewProductCategory('');
       setNewProductImage(null);
       setNewProductOffer(false);
-      await fetchProductsAction();
+      // No need to fetch - new product is added via context
     } catch {
       safeToast('Error al agregar el producto', 'error');
     } finally {
@@ -152,7 +148,6 @@ export const AdminProducts: React.FC = () => {
     if (deleteModalProductId) {
       try {
         await deleteProductAction(deleteModalProductId);
-        await fetchProductsAction(); // Refresh the products list
         setDeleteModalProductId(null);
         safeToast('Producto eliminado exitosamente', 'success');
       } catch {
@@ -169,7 +164,6 @@ export const AdminProducts: React.FC = () => {
     if (newProductImage) {
       try {
         await updateProductImageAction(productId, newProductImage);
-        await fetchProductsAction(); // Refresh the products list
         setEditingImageId(null);
         setNewProductImage(null);
         setImagePreview(null);
@@ -354,7 +348,7 @@ export const AdminProducts: React.FC = () => {
                     />
                     <button
                       onClick={() => handleUpdateProductName(product.id)}
-                      className="bg-green-500 text-white px-2 py-1 rounded text-xs md:text-base"
+                      className="bg-green-500 text-white p-1 rounded text-xs md:text-sm"
                     >
                       Guardar
                     </button>
@@ -421,9 +415,14 @@ export const AdminProducts: React.FC = () => {
                   </button>
                 )}
               </div>
+              <div className="flex items-center justify-between">
+                <p className="text-[10px] sm:text-xs text-gray-500 mt-1">
+                  Stock: {product.stock}
+                </p>
               <p className="text-[10px] sm:text-xs text-gray-500 mt-1">
                 Estado: {product.active ? 'Activo' : 'Inactivo'} {product.offer && ' • En Oferta'}
               </p>
+              </div>
             </div>
           ))}
         </div>

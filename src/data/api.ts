@@ -9,6 +9,7 @@ import {
   toggleProductOfferInFirebase,
   updateProductPriceInFirebase,
   updateProductNameInFirebase,
+  updateProductStockInFirebase,
   uploadImageToImgBB
 } from '../services/firebaseAdminService';
 
@@ -97,7 +98,7 @@ export const deleteProduct = async (productId: string) => {
 // ----------------------------
 export const uploadImageToImageKit = async (file: File): Promise<string> => {
   try {
-    // Use ImgBB for image upload
+    // Use ImgBB for image upload - call the working function from firebaseAdminService
     return await uploadImageToImgBB(file);
   } catch (error) {
     console.error('Error uploading image to ImgBB:', error);
@@ -134,6 +135,17 @@ export const updateProductImage = async (productId: string, newImageFile: File):
   } catch (error) {
     console.error('Error updating product image:', error);
     return [];
+  }
+};
+
+export const updateProductStock = async (productId: string, newStock: number) => {
+  try {
+    await updateProductStockInFirebase(productId, newStock);
+    // Return updated products list
+    return await fetchProductsFromFirebase();
+  } catch (error) {
+    console.error('Error updating product stock:', error);
+    throw error;
   }
 };
 
