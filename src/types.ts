@@ -20,6 +20,16 @@ export interface CustomerInfo {
   paymentMethod: 'efectivo' | 'tarjeta' | 'transferencia' | 'mercadopago';
 }
 
+// WhatsApp number interface
+export interface WhatsAppNumber {
+  id: string;
+  name: string;
+  role: string;
+  number: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 // Sales system types
 export interface Sale {
   id: string;

@@ -2,11 +2,12 @@ import React, { useState, useMemo, useEffect } from 'react';
 // Removed unused ToastOptions import
 import 'react-toastify/dist/ReactToastify.css';
 import { PencilIcon, MagnifyingGlassIcon, SparklesIcon, PlusIcon, TrashIcon, ShoppingCartIcon, ClockIcon, CubeIcon } from '@heroicons/react/24/solid';
-import { Package } from 'lucide-react';
+import { Package, Phone } from 'lucide-react';
 import { useProductContext, safeToast } from '../context/ProductContext';
 import SalesModal from '../components/SalesModal';
 import SalesHistory from '../components/SalesHistory';
 import AddStockModal from '../components/AddStockModal';
+import WhatsAppNumbersManager from '../components/WhatsAppNumbersManager';
 import clsx from 'clsx';
 
 // Toast configuration is now handled by safeToast function
@@ -40,7 +41,7 @@ export const AdminProducts: React.FC = () => {
   const [editingImageId, setEditingImageId] = useState<string | null>(null);
   const [isSalesModalOpen, setIsSalesModalOpen] = useState(false);
   const [isAddStockModalOpen, setIsAddStockModalOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'products' | 'sales'>('products');
+  const [activeTab, setActiveTab] = useState<'products' | 'sales' | 'whatsapp'>('products');
 
   useEffect(() => {
     const script = document.createElement("script");
@@ -243,6 +244,20 @@ export const AdminProducts: React.FC = () => {
                 <span className="sm:hidden">Ventas</span>
               </div>
             </button>
+            <button
+              onClick={() => setActiveTab('whatsapp')}
+              className={`py-3 md:py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                activeTab === 'whatsapp'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <div className="flex items-center gap-1 sm:gap-2">
+                <Phone className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span className="hidden sm:inline">Numeros asociados</span>
+                <span className="sm:hidden">WA</span>
+              </div>
+            </button>
           </nav>
         </div>
       </div>
@@ -331,26 +346,29 @@ export const AdminProducts: React.FC = () => {
                   <div className="space-y-1 md:space-y-2">
                     {/* Product name */}
                     {editingNameId === product.id ? (
-                      <div className="flex items-center space-x-1">
+                      <div className="space-y-1">
                         <input
                           type="text"
                           value={newName}
                           onChange={(e) => setNewName(e.target.value)}
-                          className="flex-1 border rounded px-1 py-1 text-xs md:text-sm"
+                          className="w-full border rounded px-2 py-1 text-xs md:text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                           onKeyPress={(e) => e.key === 'Enter' && handleUpdateProductName(product.id)}
+                          placeholder="Nombre del producto"
                         />
-                        <button
-                          onClick={() => handleUpdateProductName(product.id)}
-                          className="bg-green-500 text-white px-1.5 py-1 rounded text-xs"
-                        >
-                          ✓
-                        </button>
-                        <button
-                          onClick={() => setEditingNameId(null)}
-                          className="bg-gray-500 text-white px-1.5 py-1 rounded text-xs"
-                        >
-                          ✕
-                        </button>
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => handleUpdateProductName(product.id)}
+                            className="flex-1 bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-xs transition-colors"
+                          >
+                            ✓ Guardar
+                          </button>
+                          <button
+                            onClick={() => setEditingNameId(null)}
+                            className="flex-1 bg-gray-500 hover:bg-gray-600 text-white px-2 py-1 rounded text-xs transition-colors"
+                          >
+                            ✕ Cancelar
+                          </button>
+                        </div>
                       </div>
                     ) : (
                       <div 
@@ -369,27 +387,29 @@ export const AdminProducts: React.FC = () => {
 
                     {/* Product price */}
                     {editingPriceId === product.id ? (
-                      <div className="flex items-center space-x-1">
+                      <div className="space-y-1">
                         <input
                           type="text"
                           value={newPrice}
                           onChange={(e) => setNewPrice(e.target.value)}
-                          className="flex-1 border rounded px-1 py-1 text-xs md:text-sm"
+                          className="w-full border rounded px-2 py-1 text-xs md:text-sm focus:outline-none focus:ring-1 focus:ring-green-500"
                           onKeyPress={(e) => e.key === 'Enter' && handleUpdateProductPrice(product.id)}
                           placeholder="Nuevo precio"
                         />
-                        <button
-                          onClick={() => handleUpdateProductPrice(product.id)}
-                          className="bg-green-500 text-white px-1.5 py-1 rounded text-xs"
-                        >
-                          ✓
-                        </button>
-                        <button
-                          onClick={() => setEditingPriceId(null)}
-                          className="bg-gray-500 text-white px-1.5 py-1 rounded text-xs"
-                        >
-                          ✕
-                        </button>
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => handleUpdateProductPrice(product.id)}
+                            className="flex-1 bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-xs transition-colors"
+                          >
+                            ✓ Guardar
+                          </button>
+                          <button
+                            onClick={() => setEditingPriceId(null)}
+                            className="flex-1 bg-gray-500 hover:bg-gray-600 text-white px-2 py-1 rounded text-xs transition-colors"
+                          >
+                            ✕ Cancelar
+                          </button>
+                        </div>
                       </div>
                     ) : (
                       <div 
@@ -551,6 +571,8 @@ export const AdminProducts: React.FC = () => {
             </div>
           )}
         </div>
+      ) : activeTab === 'whatsapp' ? (
+        <WhatsAppNumbersManager />
       ) : (
         <SalesHistory />
       )}

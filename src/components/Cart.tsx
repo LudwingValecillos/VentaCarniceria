@@ -56,12 +56,6 @@ export function Cart({ items, onUpdateQuantity, onRemoveItem }: CartProps) {
 
       await createSaleAPI(saleData);
 
-      // Mostrar mensaje de éxito
-      toast.success('🎉 Pedido registrado en el sistema como PENDIENTE', {
-        position: "top-right",
-        autoClose: 3000,
-      });
-
       // Enviar mensaje por WhatsApp
       const message =
         `*Nuevo Pedido*\n\n` +

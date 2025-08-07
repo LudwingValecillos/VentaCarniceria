@@ -14,7 +14,8 @@ import {
   where,
   orderBy,
   limit as limitQuery,
-  QueryConstraint
+  QueryConstraint,
+  Timestamp
 } from 'firebase/firestore';
 // Solo usamos Firebase para datos, ImgBB para imágenes
 import { app } from '../config/firebase';
@@ -522,36 +523,70 @@ export const getSalesHistory = async (
     const butcheryId = await getCurrentButcheryId();
     const salesRef = collection(db, 'butcheries', butcheryId, 'sales');
     
+    console.log('🔍 getSalesHistory - Parámetros:', {
+      butcheryId,
+      limitCount,
+      startDate: startDate?.toISOString(),
+      endDate: endDate?.toISOString(),
+      status
+    });
+    
     // Build query with filters
     const queryConstraints: QueryConstraint[] = [];
     
-    if (startDate) {
-      queryConstraints.push(where('date', '>=', startDate));
-    }
-    if (endDate) {
-      queryConstraints.push(where('date', '<=', endDate));
-    }
-    if (status) {
+    // Aplicar filtros en orden específico para evitar conflictos
+    if (status && status !== 'all') {
       queryConstraints.push(where('status', '==', status));
+      console.log('🏷️ Aplicando filtro de estado:', status);
+    }
+    
+    if (startDate) {
+      const startTimestamp = Timestamp.fromDate(startDate);
+      queryConstraints.push(where('date', '>=', startTimestamp));
+      console.log('📅 Aplicando filtro de fecha inicio:', {
+        originalDate: startDate.toISOString(),
+        timestamp: startTimestamp.toDate().toISOString()
+      });
+    }
+    
+    if (endDate) {
+      const endTimestamp = Timestamp.fromDate(endDate);
+      queryConstraints.push(where('date', '<=', endTimestamp));
+      console.log('📅 Aplicando filtro de fecha fin:', {
+        originalDate: endDate.toISOString(),
+        timestamp: endTimestamp.toDate().toISOString()
+      });
     }
     
     // Order by date descending and limit
     queryConstraints.push(orderBy('date', 'desc'));
     queryConstraints.push(limitQuery(limitCount));
     
+    console.log('🔧 Query constraints:', queryConstraints.length);
+    
     const q = query(salesRef, ...queryConstraints);
     const querySnapshot = await getDocs(q);
+    
+    console.log('📊 QuerySnapshot size:', querySnapshot.size);
     
     const sales: Sale[] = [];
     querySnapshot.forEach((doc) => {
       const data = doc.data();
+      console.log('📄 Document data:', {
+        id: doc.id,
+        status: data.status,
+        date: data.date?.toDate?.()?.toISOString() || 'No date',
+        hasStatus: 'status' in data,
+        hasDate: 'date' in data
+      });
+      
       sales.push({
         id: doc.id,
         date: data.date?.toDate() || new Date(),
         totalAmount: data.totalAmount || 0,
         totalItems: data.totalItems || 0,
         totalQuantity: data.totalQuantity || 0,
-        status: data.status || 'completed',
+        status: data.status || 'completed', // Default to 'completed' if no status field
         createdAt: data.createdAt?.toDate() || new Date(),
         updatedAt: data.updatedAt?.toDate() || new Date(),
         notes: data.notes
@@ -559,10 +594,21 @@ export const getSalesHistory = async (
     });
     
     console.log(`✅ Fetched ${sales.length} sales from Firebase`);
+    console.log('📊 Distribución por estado:', sales.reduce((acc, sale) => {
+      acc[sale.status] = (acc[sale.status] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>));
+    console.log('📋 Detalles de cada venta:', sales.map(sale => ({
+      id: sale.id,
+      status: sale.status,
+      date: sale.date.toISOString()
+    })));
+    
     return sales;
     
   } catch (error) {
     console.error('❌ Error fetching sales history:', error);
+    console.error('❌ Detalles del error:', error);
     throw new Error('Error al obtener el historial de ventas');
   }
 };
@@ -681,6 +727,42 @@ export const updateSaleStatus = async (
   }
 };
 
+/**
+ * Test function to check data structure in Firebase
+ */
+export const testSalesDataStructure = async (): Promise<void> => {
+  try {
+    const butcheryId = await getCurrentButcheryId();
+    const salesRef = collection(db, 'butcheries', butcheryId, 'sales');
+    
+    console.log('🧪 Testing sales data structure...');
+    
+    // Get all sales without filters to see the raw data
+    const q = query(salesRef, orderBy('date', 'desc'), limitQuery(10));
+    const querySnapshot = await getDocs(q);
+    
+    console.log('📊 Found', querySnapshot.size, 'sales');
+    
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      console.log('📄 Sale document:', {
+        id: doc.id,
+        date: data.date,
+        dateType: typeof data.date,
+        dateToDate: data.date?.toDate?.()?.toISOString(),
+        status: data.status,
+        statusType: typeof data.status,
+        hasStatus: 'status' in data,
+        hasDate: 'date' in data,
+        allFields: Object.keys(data)
+      });
+    });
+    
+  } catch (error) {
+    console.error('❌ Error testing data structure:', error);
+  }
+};
+
 export default {
   fetchProductsFromFirebase,
   addProductToFirebase,
@@ -696,5 +778,6 @@ export default {
   createSale,
   getSalesHistory,
   getSaleWithItems,
-  updateSaleStatus
+  updateSaleStatus,
+  testSalesDataStructure
 };

@@ -1,12 +1,13 @@
 import { getFirestore, doc, getDoc, collection, getDocs } from 'firebase/firestore';
 import { app } from './firebase';
+import { WhatsAppNumber } from '../types';
 
 const db = getFirestore(app);
 
 // Configuración por defecto (fallback)
 const DEFAULT_CONFIG = {
   // Información básica de la carnicería
-  name: "Daniele Carniceria",
+  name: "..",
   tagline: "Los mejores cortes de carne fresca y de alta calidad",
   description: "Más de 20 años ofreciendo los mejores cortes de carne fresca y de alta calidad para tu hogar.",
   logoUrl: "",
@@ -40,6 +41,9 @@ const DEFAULT_CONFIG = {
   
   // Horarios de atención
   schedules: "Lunes a Sábado: 9:00 - 13:00 y 17:00 - 21:00 | Domingos: 9:00 - 13:00",
+  
+  // WhatsApp numbers array
+  whatsappNumbers: [] as WhatsAppNumber[],
 };
 
 // Interfaz para la configuración dinámica
@@ -63,6 +67,7 @@ interface DynamicConfig {
     facebook: { url: string; username: string };
     whatsapp: { url: string; message: string };
   };
+  whatsappNumbers: WhatsAppNumber[];
 }
 
 // Configuración dinámica que se carga desde Firebase
@@ -170,7 +175,17 @@ export const loadStoreConfig = async (): Promise<void> => {
             url: butcheryData.whatsappNumber ? `https://wa.me/${butcheryData.whatsappNumber.replace('+', '')}` : DEFAULT_CONFIG.social.whatsapp.url,
             message: "Hola, me gustaría hacer un pedido."
           }
-        }
+        },
+        whatsappNumbers: Array.isArray(butcheryData.whatsappNumbers) 
+          ? butcheryData.whatsappNumbers.map((item: { name?: string; role?: string; number?: string; createdAt?: any; updatedAt?: any }, index: number) => ({
+              id: `temp-${index}`,
+              name: item.name || '',
+              role: item.role || '',
+              number: item.number || '',
+              createdAt: item.createdAt?.toDate() || new Date(),
+              updatedAt: item.updatedAt?.toDate() || new Date(),
+            }))
+          : DEFAULT_CONFIG.whatsappNumbers
       };
       
       // Actualizar favicon y título si hay logoUrl
@@ -198,6 +213,7 @@ export const STORE_CONFIG = {
   get description() { return DYNAMIC_CONFIG.description; },
   get contact() { return DYNAMIC_CONFIG.contact; },
   get social() { return DYNAMIC_CONFIG.social; },
+  get whatsappNumbers() { return DYNAMIC_CONFIG.whatsappNumbers; },
   
   // Configuración del carrito (estática)
   cart: {

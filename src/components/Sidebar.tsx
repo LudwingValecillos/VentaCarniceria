@@ -1,4 +1,4 @@
-import { X, ChevronDown, ChevronUp, Home, Package, MessageCircle, Instagram, Facebook } from 'lucide-react';
+import { X, ChevronDown, ChevronUp, Home, Package, MessageCircle, Instagram, Facebook, LogIn } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { STORE_CONFIG } from '../config/store';
@@ -15,6 +15,9 @@ export function Sidebar({ isOpen, onClose, onCategorySelect }: SidebarProps) {
   const location = useLocation();
 
   const categories = STORE_CONFIG.categories;
+
+  // Check if we're on the demo site
+  const isDemoSite = window.location.href === 'https://voluble-squirrel-a30bd3.netlify.app/' || window.location.href === 'http://localhost:5173/';
 
   const clearStorage = () => {
     localStorage.removeItem('isLoggedIn');
@@ -94,6 +97,9 @@ export function Sidebar({ isOpen, onClose, onCategorySelect }: SidebarProps) {
                   <span className="font-medium">Inicio</span>
                 </Link>
 
+                {/* Demo Login Button */}
+                
+
                 {/* Productos section */}
                 <div className="border-t border-gray-100 pt-4 mt-4">
                   <button
@@ -155,6 +161,16 @@ export function Sidebar({ isOpen, onClose, onCategorySelect }: SidebarProps) {
                     <span className="font-medium">Contacto WhatsApp</span>
                   </a>
                 </div>
+                {isDemoSite && (
+                  <Link
+                    to="/login"
+                    className="flex items-center gap-4 p-4 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-all duration-200 group"
+                    onClick={onClose}
+                  >
+                    <LogIn className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                    <span className="font-medium">Iniciar Sesión (Demo)</span>
+                  </Link>
+                )}
               </div>
             )}
           </nav>
