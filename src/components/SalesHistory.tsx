@@ -21,7 +21,6 @@ import { Sale, SaleWithItems } from '../types';
 import { fetchSalesHistory, fetchSaleDetails, updateSaleStatusAPI } from '../data/api';
 import { useProductContext } from '../context/ProductContext';
 import { toast } from 'react-toastify';
-import { testSalesDataStructure } from '../services/firebaseAdminService';
 
 export const SalesHistory: React.FC = () => {
   const { state, updateProductStockAction, fetchProductsAction } = useProductContext();
@@ -370,7 +369,7 @@ export const SalesHistory: React.FC = () => {
       {/* Filtros y búsqueda */}
       <div className="bg-white p-4 md:p-6 rounded-lg border border-gray-200 shadow-sm">
         <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-          <div className="flex flex-col sm:flex-row gap-4 flex-1">
+          <div className="flex flex-col sm:flex-row gap-4 flex-1 w-full md:w-auto">
             {/* Búsqueda */}
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -390,9 +389,9 @@ export const SalesHistory: React.FC = () => {
               className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="all">Todos los estados</option>
-              <option value="completed">Completadas</option>
-              <option value="pending">Pendientes</option>
-              <option value="cancelled">Canceladas</option>
+              <option value="completed" className="bg-green-100 text-green-800">Completadas</option>
+              <option value="pending" className="bg-yellow-100 text-yellow-800">Pendientes</option>
+              <option value="cancelled" className="bg-red-100 text-red-800">Canceladas</option>
             </select>
 
             {/* Filtro de fecha - Mantener todas las opciones */}
@@ -412,52 +411,12 @@ export const SalesHistory: React.FC = () => {
           <button
             onClick={loadSalesHistory}
             disabled={loading}
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+            className="flex gap-2 w-full md:w-auto  bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
           >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''} `} />
             Actualizar
           </button>
 
-          {/* Debug button - TEMPORAL */}
-          <button
-            onClick={() => {
-              console.log('🔍 Estado actual de filtros:', {
-                statusFilter,
-                dateFilter,
-                searchTerm,
-                salesCount: sales.length,
-                filteredCount: filteredSales.length
-              });
-              console.log('📊 Ventas por estado:', sales.reduce((acc, sale) => {
-                acc[sale.status] = (acc[sale.status] || 0) + 1;
-                return acc;
-              }, {} as Record<string, number>));
-              console.log('📋 Todas las ventas con sus estados:', sales.map(sale => ({
-                id: sale.id,
-                status: sale.status,
-                date: sale.date.toISOString()
-              })));
-              
-              // Test the date range calculation
-              const { startDate, endDate } = getDateRange(dateFilter);
-              console.log('📅 Test de rango de fechas:', {
-                filter: dateFilter,
-                startDate: startDate?.toISOString(),
-                endDate: endDate?.toISOString()
-              });
-              
-              // Test status filter logic
-              const statusParam = statusFilter === 'all' ? undefined : statusFilter;
-              console.log('🏷️ Test de filtro de estado:', {
-                statusFilter,
-                statusParam
-              });
-              testSalesDataStructure();
-            }}
-            className="flex items-center gap-2 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-          >
-            Debug
-          </button>
         </div>
       </div>
 
@@ -494,11 +453,10 @@ export const SalesHistory: React.FC = () => {
                     <div className="flex items-center justify-between">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-3 mb-2">
-                          <h3 className="text-lg font-semibold text-gray-900 truncate">
+                          <h3 className="text-sm font-semibold text-gray-900 ">
                             {sale.id}
                           </h3>
                           
-                          {/* Estado con select */}
                           <div className="flex items-center gap-2">
                             <select
                               value={sale.status}
@@ -518,7 +476,7 @@ export const SalesHistory: React.FC = () => {
                           </div>
                         </div>
                         
-                        <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
+                        <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600">
                           <div className="flex items-center gap-1">
                             <Calendar className="w-4 h-4" />
                             {formatDate(sale.date)}
@@ -540,7 +498,7 @@ export const SalesHistory: React.FC = () => {
                             ${formatPrice(sale.totalAmount)}
                           </p>
                           <p className="text-sm text-gray-500">
-                            {sale.totalQuantity} unidades
+                            {sale.totalQuantity} unidad{sale.totalQuantity !== 1 ? 'es' : ''}
                           </p>
                         </div>
                         

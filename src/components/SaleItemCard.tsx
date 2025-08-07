@@ -51,7 +51,7 @@ export const SaleItemCard: React.FC<SaleItemCardProps> = ({
         {/* Product Info - Compact */}
         <div className="p-3 border-b border-gray-100">
           <div className="flex items-start justify-between gap-1 mb-2">
-            <h4 className="font-bold text-gray-800 text-xs lg:text-sm leading-tight line-clamp-2 flex-1">
+            <h4 className="font-bold text-gray-800 text-xs lg:text-sm leading-tight break-words overflow-hidden text-ellipsis flex-1">
               {item.name}
             </h4>
             <button
@@ -120,7 +120,7 @@ export const SaleItemCard: React.FC<SaleItemCardProps> = ({
       <div className="p-3 border-b border-gray-100">
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
-            <h4 className="font-bold text-gray-800 text-base mb-1 leading-tight line-clamp-2">
+            <h4 className="font-bold text-gray-800 text-base mb-1 leading-tight break-words overflow-hidden text-ellipsis">
               {item.name}
             </h4>
             <p className="text-green-600 font-semibold text-sm mb-1">

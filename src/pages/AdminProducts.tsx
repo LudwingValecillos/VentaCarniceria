@@ -190,7 +190,7 @@ export const AdminProducts: React.FC = () => {
         <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">
           Panel de Administración
         </h1>
-        {activeTab === 'products' && (
+        
           <div className="flex gap-2 sm:gap-3">
             <button
               onClick={() => setIsAddStockModalOpen(true)}
@@ -209,7 +209,6 @@ export const AdminProducts: React.FC = () => {
               <span className="sm:hidden">Venta</span>
             </button>
           </div>
-        )}
       </div>
 
       {/* Tabs - Optimizado para móvil */}
