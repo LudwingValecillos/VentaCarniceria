@@ -34,6 +34,28 @@ export const useWhatsAppNumbers = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const normalizePhoneForStorage = (raw: string): string => {
+    const digitsOnly = (raw || '').replace(/\D/g, '');
+    if (!digitsOnly) return '';
+
+    let normalized = digitsOnly;
+
+    // Remove leading plus if present (we store digits only)
+    if (normalized.startsWith('54') && !normalized.startsWith('549')) {
+      normalized = `549${normalized.slice(2)}`;
+    } else if (!normalized.startsWith('549')) {
+      // Catch other cases like local numbers, or starting with 9
+      normalized = `549${normalized}`;
+    }
+
+    // Remove potential leading zero after country+mobile code
+    if (normalized.startsWith('5490')) {
+      normalized = '549' + normalized.slice(4);
+    }
+
+    return normalized;
+  };
+
   const load = async () => {
     setIsLoading(true);
     setError(null);
@@ -58,7 +80,7 @@ export const useWhatsAppNumbers = () => {
         id: `temp-${index}`,
         name: item.name || '',
         role: item.role || '',
-        number: item.number || '',
+        number: normalizePhoneForStorage(item.number || ''),
         createdAt: item.createdAt?.toDate() || new Date(),
         updatedAt: item.updatedAt?.toDate() || new Date(),
       }));
@@ -82,8 +104,15 @@ export const useWhatsAppNumbers = () => {
       
       const ref = doc(db, 'butcheries', butcheryId);
       
+      // Normalize numbers before persisting
+      const normalizedNext: WhatsAppNumber[] = next.map((n) => ({
+        ...n,
+        number: normalizePhoneForStorage(n.number),
+        updatedAt: new Date(),
+      }));
+
       // Convert WhatsAppNumber[] back to the format expected by Firebase
-      const firebaseNumbers = next.map((num) => {
+      const firebaseNumbers = normalizedNext.map((num) => {
         const now = new Date();
         return {
           name: num.name,
@@ -100,7 +129,7 @@ export const useWhatsAppNumbers = () => {
       await updateDoc(ref, { whatsappNumbers: firebaseNumbers });
       
       // Actualizar el estado local inmediatamente
-      setNumbers(next);
+      setNumbers(normalizedNext);
       
       console.log('✅ Números guardados exitosamente');
       return true;

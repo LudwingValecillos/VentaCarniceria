@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Plus, Edit, Save, Phone, User, Briefcase, ChevronDown } from 'lucide-react';
 import { WhatsAppNumber } from '../types';
@@ -25,13 +25,76 @@ const ROLE_OPTIONS = [
   { value: 'propietario', label: 'Propietario' },
 ];
 
-const isValidPhone = (v: string) => /^\+?[1-9]\d{6,14}$/.test(v.replace(/\s|-/g, ''));
+const onlyDigits = (v: string) => (v || '').replace(/\D/g, '');
+const ensure549 = (raw: string) => {
+  const digits = onlyDigits(raw);
+  if (!digits) return '';
+  if (digits.startsWith('549')) return digits;
+  if (digits.startsWith('54')) return `549${digits.slice(2)}`;
+  return `549${digits}`;
+};
+const isValidPhone = (v: string) => {
+  const digits = ensure549(v);
+  return /^549\d{7,12}$/.test(digits);
+};
 
 export const WhatsAppNumbersModal: React.FC<Props> = ({ isOpen, onClose, numbers, onSave, isLoading }) => {
   const [list, setList] = useState<WhatsAppNumber[]>(numbers);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [formData, setFormData] = useState<FormData>({ name: '', role: '', number: '' });
   const [error, setError] = useState<string | null>(null);
+  const inputNameRef = useRef<HTMLInputElement | null>(null);
+  const inputRoleRef = useRef<HTMLSelectElement | null>(null);
+  const inputNumberRef = useRef<HTMLInputElement | null>(null);
+
+  const livePreview = useMemo(() => {
+    const normalized = ensure549(formData.number);
+    if (!normalized) return '';
+    return `https://wa.me/${normalized}`;
+  }, [formData.number]);
+
+  const isReady = useMemo(() => {
+    return (
+      !!formData.name.trim() &&
+      !!formData.role.trim() &&
+      !!formData.number.trim() &&
+      isValidPhone(formData.number)
+    );
+  }, [formData]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    // Focus first missing field for speed
+    const nameOk = !!formData.name.trim();
+    const roleOk = !!formData.role.trim();
+    const numberOk = !!formData.number.trim();
+    if (!nameOk && inputNameRef.current) inputNameRef.current.focus();
+    else if (!roleOk && inputRoleRef.current) inputRoleRef.current.focus();
+    else if (!numberOk && inputNumberRef.current) inputNumberRef.current.focus();
+  }, [isOpen, editingIndex]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        if (editingIndex !== null) {
+          reset();
+        } else {
+          onClose();
+        }
+      } else if (e.key === 'Enter') {
+        const active = document.activeElement as HTMLElement | null;
+        const isInput = active && ['INPUT', 'SELECT'].includes(active.tagName);
+        if (isInput) {
+          e.preventDefault();
+          if (editingIndex === null) add(); else applyEdit();
+        }
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [isOpen, editingIndex, formData]);
 
   useEffect(() => setList(numbers), [numbers]);
 
@@ -55,7 +118,7 @@ export const WhatsAppNumbersModal: React.FC<Props> = ({ isOpen, onClose, numbers
       return false;
     }
     if (!isValidPhone(formData.number)) {
-      setError('Número inválido (usa formato +549...)');
+      setError('Número inválido. Se normaliza a 549 + número.');
       return false;
     }
     setError(null);
@@ -69,7 +132,7 @@ export const WhatsAppNumbersModal: React.FC<Props> = ({ isOpen, onClose, numbers
       id: Date.now().toString(),
       name: formData.name.trim(),
       role: formData.role.trim(),
-      number: formData.number.trim(),
+      number: ensure549(formData.number.trim()),
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -98,7 +161,7 @@ export const WhatsAppNumbersModal: React.FC<Props> = ({ isOpen, onClose, numbers
             ...n, 
             name: formData.name.trim(),
             role: formData.role.trim(),
-            number: formData.number.trim(),
+            number: ensure549(formData.number.trim()),
             updatedAt: new Date()
           }
         : n
@@ -106,10 +169,15 @@ export const WhatsAppNumbersModal: React.FC<Props> = ({ isOpen, onClose, numbers
     reset();
   };
 
-  const remove = (i: number) => setList(prev => prev.filter((_, idx) => idx !== i));
+  const remove = (i: number) => {
+    const toDelete = list[i];
+    const ok = window.confirm(`¿Eliminar a ${toDelete?.name} (${toDelete?.number})?`);
+    if (!ok) return;
+    setList(prev => prev.filter((_, idx) => idx !== i));
+  };
   const saveAll = async () => { 
     try {
-      const ok = await onSave(list); 
+      const ok = await onSave(list.map(n => ({ ...n, number: ensure549(n.number) })));
       if (ok !== false) {
         onClose(); 
       }
@@ -174,6 +242,7 @@ export const WhatsAppNumbersModal: React.FC<Props> = ({ isOpen, onClose, numbers
                 <div className="relative">
                   <Briefcase className="absolute left-2.5 md:left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <select
+                    ref={inputRoleRef}
                     value={formData.role}
                     onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                     className="w-full pl-8 md:pl-10 pr-8 md:pr-10 py-2 md:py-3 border border-gray-300 rounded-lg md:rounded-xl text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white shadow-sm appearance-none"
@@ -194,11 +263,21 @@ export const WhatsAppNumbersModal: React.FC<Props> = ({ isOpen, onClose, numbers
                 <div className="relative">
                   <Phone className="absolute left-2.5 md:left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
+                    ref={inputNumberRef}
                     value={formData.number}
                     onChange={(e) => setFormData({ ...formData, number: e.target.value })}
-                    placeholder="+54 9 11 1234 5678"
+                    placeholder="54911XXXXXXXX"
                     className="w-full pl-8 md:pl-10 pr-3 md:pr-4 py-2 md:py-3 border border-gray-300 rounded-lg md:rounded-xl text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white shadow-sm"
                   />
+                  <div className="mt-1 text-[11px] md:text-xs text-gray-500 pl-1">
+                    Se guardará como: <span className="font-medium text-gray-700">{ensure549(formData.number) || '—'}</span>
+                    {livePreview && (
+                      <>
+                        {' · '}
+                        <a className="text-green-600 hover:underline" href={livePreview} target="_blank" rel="noreferrer">Probar link</a>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -213,7 +292,8 @@ export const WhatsAppNumbersModal: React.FC<Props> = ({ isOpen, onClose, numbers
               {editingIndex === null ? (
                 <button 
                   onClick={add} 
-                  className="px-3 md:px-4 py-1.5 md:py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg flex items-center gap-1 transition-all duration-200 text-sm"
+                  className="px-3 md:px-4 py-1.5 md:py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg flex items-center gap-1 transition-all duration-200 text-sm disabled:opacity-50"
+                  disabled={!isReady}
                 >
                   <Plus className="w-3.5 h-3.5 md:w-4 md:h-4" /> Agregar
                 </button>
@@ -221,7 +301,8 @@ export const WhatsAppNumbersModal: React.FC<Props> = ({ isOpen, onClose, numbers
                 <>
                   <button 
                     onClick={applyEdit} 
-                    className="px-3 md:px-4 py-1.5 md:py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg flex items-center gap-1 transition-all duration-200 text-sm"
+                    className="px-3 md:px-4 py-1.5 md:py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg flex items-center gap-1 transition-all duration-200 text-sm disabled:opacity-50"
+                    disabled={!isReady}
                   >
                     <Edit className="w-3.5 h-3.5 md:w-4 md:h-4" /> Guardar
                   </button>
@@ -264,7 +345,7 @@ export const WhatsAppNumbersModal: React.FC<Props> = ({ isOpen, onClose, numbers
                           <Briefcase className="w-3.5 h-3.5 md:w-4 md:h-4" />
                           <span className="capitalize">{n.role}</span>
                         </div>
-                        <p className="text-xs md:text-sm text-green-600 font-medium">{n.number}</p>
+                        <p className="text-xs md:text-sm text-green-600 font-medium">{ensure549(n.number)}</p>
                       </div>
                     </div>
                     <div className="flex gap-1.5 md:gap-2">
@@ -297,7 +378,7 @@ export const WhatsAppNumbersModal: React.FC<Props> = ({ isOpen, onClose, numbers
                 Cancelar
               </button>
               <button 
-                disabled={isLoading} 
+                disabled={isLoading || list.length === 0}
                 onClick={saveAll} 
                 className="px-4 md:px-6 py-1.5 md:py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg flex items-center gap-1.5 md:gap-2 disabled:opacity-50 transition-all duration-200 text-sm"
               >

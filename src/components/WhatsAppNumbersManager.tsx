@@ -1,15 +1,25 @@
-import React, { useState } from 'react';
-import { Phone, Plus, MessageCircle, User, Briefcase } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { Phone, Plus, MessageCircle, User, Briefcase, Copy, Search } from 'lucide-react';
 import WhatsAppNumbersModal from './WhatsAppNumbersModal';
 import { useWhatsAppNumbers } from '../hooks/useWhatsAppNumbers';
 import { WhatsAppNumber } from '../types';
 
 const WhatsAppNumbersManager: React.FC = () => {
   const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
   const { numbers, isLoading, error, save, load } = useWhatsAppNumbers();
 
+  const ensure549 = (raw: string) => {
+    const digits = (raw || '').replace(/\D/g, '');
+    if (!digits) return '';
+    if (digits.startsWith('549')) return digits;
+    if (digits.startsWith('54')) return `549${digits.slice(2)}`;
+    return `549${digits}`;
+  };
+
   const handleWhatsAppClick = (num: WhatsAppNumber) => {
-  window.open(`https://api.whatsapp.com/send/?phone=549${num.number}`, '_blank');
+    const normalized = ensure549(num.number);
+    window.open(`https://wa.me/${normalized}`, '_blank');
   };
 
   const handleOpenModal = async () => {
@@ -22,6 +32,27 @@ const WhatsAppNumbersManager: React.FC = () => {
     setOpen(false);
     // Recargar datos después de cerrar el modal
     load();
+  };
+
+  const filtered = useMemo(() => {
+    if (!query.trim()) return numbers;
+    const q = query.toLowerCase();
+    return numbers.filter(n =>
+      n.name.toLowerCase().includes(q) ||
+      n.role.toLowerCase().includes(q) ||
+      ensure549(n.number).includes(q.replace(/\D/g, ''))
+    );
+  }, [numbers, query]);
+
+  const copyNumber = async (n: WhatsAppNumber) => {
+    const text = ensure549(n.number);
+    try {
+      await navigator.clipboard.writeText(text);
+      // Naive toast
+      alert(`Número copiado: ${text}`);
+    } catch {
+      alert('No se pudo copiar el número');
+    }
   };
 
   return (
@@ -49,6 +80,17 @@ const WhatsAppNumbersManager: React.FC = () => {
 
       {/* Content */}
       <div className="p-3 md:p-6">
+        <div className="mb-3 md:mb-4 flex items-center gap-2">
+          <div className="relative flex-1">
+            <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Buscar por nombre, rol o número"
+              className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+            />
+          </div>
+        </div>
         
 
         {error && (
@@ -82,7 +124,7 @@ const WhatsAppNumbersManager: React.FC = () => {
           <div className="space-y-3 md:space-y-4">
             <div className="flex items-center justify-between mb-3 md:mb-4">
               <h3 className="text-base md:text-lg font-semibold text-gray-800">
-                Números de Contacto ({numbers.length})
+                Números de Contacto ({filtered.length})
               </h3>
               <span className="text-xs md:text-sm text-gray-500">
                 Haz clic en "Contactar" para abrir WhatsApp
@@ -90,7 +132,7 @@ const WhatsAppNumbersManager: React.FC = () => {
             </div>
             
             <div className="grid gap-3 md:gap-4">
-              {numbers.map((num, i) => (
+              {filtered.map((num, i) => (
                 <div key={i} className="flex items-center justify-between p-3 md:p-4 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-all duration-200">
                   <div className="flex items-center gap-3 md:gap-4">
                     <div className="w-10 h-10 md:w-12 md:h-12 bg-green-100 rounded-full flex items-center justify-center">
@@ -102,15 +144,24 @@ const WhatsAppNumbersManager: React.FC = () => {
                         <Briefcase className="w-3.5 h-3.5 md:w-4 md:h-4" />
                         <span className="capitalize">{num.role}</span>
                       </div>
-                      <p className="text-xs md:text-sm text-green-600 font-medium">{num.number}</p>
+                      <p className="text-xs md:text-sm text-green-600 font-medium">{ensure549(num.number)}</p>
                     </div>
                   </div>
-                  <button 
-                    onClick={() => handleWhatsAppClick(num)} 
-                    className="flex items-center gap-1.5 md:gap-2 px-3 md:px-4 py-1.5 md:py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-all duration-200 text-xs"
-                  >
-                    <MessageCircle className="w-3.5 h-3.5 md:w-4 md:h-4" /> Contactar
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button 
+                      onClick={() => copyNumber(num)} 
+                      className="flex items-center gap-1 px-2 py-1.5 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-all duration-200 text-xs"
+                      title="Copiar número"
+                    >
+                      <Copy className="w-3.5 h-3.5" /> Copiar
+                    </button>
+                    <button 
+                      onClick={() => handleWhatsAppClick(num)} 
+                      className="flex items-center gap-1.5 md:gap-2 px-3 md:px-4 py-1.5 md:py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-all duration-200 text-xs"
+                    >
+                      <MessageCircle className="w-3.5 h-3.5 md:w-4 md:h-4" /> Contactar
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>

@@ -1,0 +1,365 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "const { butcheryId, params } = $json;\nif (!butcheryId) {\n  return [{ json: { ok: false, accion: 'create_sale', error: 'butcheryId es requerido' } }];\n}\nconst items = Array.isArray(params?.items) ? params.items : [];\nif (items.length === 0) {\n  return [{ json: { ok: false, accion: 'create_sale', error: 'Items es requerido y debe ser un array no vacío' } }];\n}\nconst now = new Date();\nconst y = now.getFullYear();\nconst m = String(now.getMonth() + 1).padStart(2, '0');\nconst d = String(now.getDate()).padStart(2, '0');\nconst hh = String(now.getHours()).padStart(2, '0');\nconst mm = String(now.getMinutes()).padStart(2, '0');\nconst ss = String(now.getSeconds()).padStart(2, '0');\nconst ms = String(now.getMilliseconds()).padStart(3, '0');\nconst saleId = `sale_${y}${m}${d}_${hh}${mm}${ss}_${ms}`;\nconst totalAmount = items.reduce((s, it) => s + Number(it.quantity) * Number(it.unitPrice || 0), 0);\nconst totalItems = items.length;\nconst totalQuantity = items.reduce((s, it) => s + Number(it.quantity), 0);\nconst saleFields = {\n  date: { timestampValue: now.toISOString() },\n  totalAmount: { doubleValue: Number(totalAmount) },\n  totalItems: { integerValue: String(totalItems) },\n  totalQuantity: { integerValue: String(totalQuantity) },\n  status: { stringValue: params.status || 'completed' },\n  createdAt: { timestampValue: now.toISOString() },\n  updatedAt: { timestampValue: now.toISOString() }\n};\nif (params.notes) saleFields.notes = { stringValue: String(params.notes) };\nreturn [{\n  json: {\n    accion: 'create_sale',\n    butcheryId,\n    saleId,\n    saleData: { id: saleId, totalAmount, totalItems, totalQuantity },\n    url: `https://firestore.googleapis.com/v1/projects/nextcodecarniceria/databases/(default)/documents/butcheries/${butcheryId}/sales?key=AIzaSyCNQM4TKM2KVZCF5c-rnCrW09helWwq_ZQ&documentId=${saleId}`,\n    body: { fields: saleFields },\n    items\n  }\n}];"
+      },
+      "name": "create_sale: Build Sale",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2496,
+        4960
+      ],
+      "id": "20bd0a75-4c65-4842-a260-12d0c8e4c5de"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$json.url}}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{$json.body}}",
+        "options": {}
+      },
+      "name": "create_sale: POST Sale",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -2496,
+        5120
+      ],
+      "id": "97a1c842-dc90-48ff-9a57-a8d8dbc47609"
+    },
+    {
+      "parameters": {
+        "jsCode": "const src = $node['create_sale: Build Sale'].json;\nconst { butcheryId, saleId, saleData } = src;\nconst items = src.items;\nif (!Array.isArray(items) || items.length === 0) {\n  return [{ json: { ok: false, accion: 'create_sale', error: 'Items no válidos o vacíos' } }];\n}\nlet idx = 0;\nreturn items.map(it => ({ json: {\n  accion: 'create_sale',\n  butcheryId,\n  saleId,\n  saleData,\n  index: ++idx,\n  productId: String(it.productId || ''),\n  productName: String(it.productName || it.name || ''),\n  quantity: Number(it.quantity),\n  category: String(it.category || ''),\n  providedUnitPrice: it.unitPrice\n} }));"
+      },
+      "name": "create_sale: Build Items",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2512,
+        5264
+      ],
+      "id": "9651dd4f-d8cc-47d6-941b-e9ff577a925e"
+    },
+    {
+      "parameters": {
+        "jsCode": "const { butcheryId, saleId, saleData, index, productId, productName, quantity, category, providedUnitPrice } = $json;\nconst isPlaceholder = (id) => /[<>]/.test(String(id));\nif (productId && !isPlaceholder(productId)) {\n  return [{ json: { accion: 'create_sale', butcheryId, saleId, saleData, index, productId: String(productId), productName, quantity, category, providedUnitPrice, needResolve: false } }];\n}\nif (!productName) {\n  return [{ json: { ok: false, accion: 'create_sale', error: 'Falta productId o productName' } }];\n}\nconst runQueryUrl = 'https://firestore.googleapis.com/v1/projects/nextcodecarniceria/databases/(default)/documents:runQuery' +\n  '?key=AIzaSyCNQM4TKM2KVZCF5c-rnCrW09helWwq_ZQ' +\n  '&parent=' + encodeURI(`projects/nextcodecarniceria/databases/(default)/documents/butcheries/${butcheryId}`);\nconst runQueryBody = {\n  structuredQuery: {\n    from: [{ collectionId: 'products' }],\n    where: {\n      fieldFilter: {\n        field: { fieldPath: 'name' },\n        op: 'EQUAL',\n        value: { stringValue: String(productName) }\n      }\n    },\n    limit: 1\n  }\n};\nreturn [{ json: { accion: 'create_sale', butcheryId, saleId, saleData, index, productName, quantity, category, providedUnitPrice, needResolve: true, runQueryUrl, runQueryBody } }];"
+      },
+      "name": "create_sale: Ensure ProductId",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2208,
+        4976
+      ],
+      "id": "0554c461-fd2b-4a60-8ec4-324610477d54"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{$json.needResolve}}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              },
+              "id": "8ca92d0d-c73e-47b7-865a-52aefb691459"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "create_sale: IF needResolve1",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -2240,
+        5184
+      ],
+      "id": "95e57721-2860-41d8-a7a5-191115103d1d"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$json.runQueryUrl}}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{$json.runQueryBody}}",
+        "options": {}
+      },
+      "name": "create_sale: Resolve Id (RunQuery)1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -2032,
+        4992
+      ],
+      "id": "976b2b21-87b2-4438-b74c-617980bfe14d"
+    },
+    {
+      "parameters": {
+        "jsCode": "const base = $node['create_sale: Ensure ProductId'].json;\nconst inItems = $input.all();\nlet id = null;\nfor (const it of inItems) {\n  const payload = it.json;\n  if (Array.isArray(payload)) {\n    for (const row of payload) {\n      const name = row?.document?.fields?.name?.stringValue;\n      const did = row?.document?.name?.split('/').pop();\n      if (name && did) { id = did; break; }\n    }\n  }\n  if (id) break;\n}\nif (!id) {\n  return [{ json: { ok: false, accion: 'create_sale', error: `No pude resolver id para \"${base.productName}\"` } }];\n}\nreturn [{ json: { accion: 'create_sale', butcheryId: base.butcheryId, saleId: base.saleId, saleData: base.saleData, index: base.index, productId: id, productName: base.productName, quantity: base.quantity, category: base.category, providedUnitPrice: base.providedUnitPrice, needResolve: false } }];"
+      },
+      "name": "create_sale: Apply Resolved Id1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1872,
+        5008
+      ],
+      "id": "0b62321b-5093-4d58-b998-9754afe93408"
+    },
+    {
+      "parameters": {
+        "jsCode": "const { butcheryId, saleId, saleData, index, productId, productName, quantity, category, providedUnitPrice } = $json;\nif (!productId) {\n  return [{ json: { ok: false, accion: 'create_sale', error: 'productId requerido' } }];\n}\nconst url = `https://firestore.googleapis.com/v1/projects/nextcodecarniceria/databases/(default)/documents/butcheries/${butcheryId}/products/${productId}?key=AIzaSyCNQM4TKM2KVZCF5c-rnCrW09helWwq_ZQ`;\nreturn [{ json: { accion: 'create_sale', butcheryId, saleId, saleData, index, productId, productName, quantity, category, providedUnitPrice, url } }];"
+      },
+      "name": "create_sale: Update Stock (GET URL)1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1728,
+        5200
+      ],
+      "id": "a5292571-e5be-4b68-ae94-efe19b998d12"
+    },
+    {
+      "parameters": {
+        "url": "={{$json.url}}",
+        "options": {}
+      },
+      "name": "create_sale: GET Product1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1616,
+        4896
+      ],
+      "id": "c0834c8f-11b0-4213-ab0a-f769427ee693"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $node['create_sale: Update Stock (GET URL)1'].json;\nconst doc = $json;\nif (!doc.fields) {\n  return [{ json: { ok: false, accion: 'create_sale', error: `Producto ${ctx.productId} no encontrado` } }];\n}\nconst currentStock = Number(doc.fields.stock?.integerValue || doc.fields.stock?.doubleValue || 0);\nconst newStock = Math.max(0, currentStock - Number(ctx.quantity));\nconst fsPrice = (doc.fields.price?.doubleValue !== undefined ? Number(doc.fields.price.doubleValue) : undefined) ?? (doc.fields.price?.integerValue !== undefined ? Number(doc.fields.price.integerValue) : undefined) ?? 0;\nconst unitPrice = ctx.providedUnitPrice != null ? Number(ctx.providedUnitPrice) : fsPrice;\nconst subtotal = Number(ctx.quantity) * Number(unitPrice);\nconst nowIso = new Date().toISOString();\nreturn [{\n  json: {\n    accion: 'create_sale',\n    butcheryId: ctx.butcheryId,\n    saleId: ctx.saleId,\n    saleData: ctx.saleData,\n    index: ctx.index,\n    productId: ctx.productId,\n    productName: ctx.productName,\n    quantity: ctx.quantity,\n    category: ctx.category,\n    unitPrice,\n    subtotal,\n    patchUrl: `https://firestore.googleapis.com/v1/projects/nextcodecarniceria/databases/(default)/documents/butcheries/${ctx.butcheryId}/products/${ctx.productId}?key=AIzaSyCNQM4TKM2KVZCF5c-rnCrW09helWwq_ZQ&updateMask.fieldPaths=stock&updateMask.fieldPaths=updatedAt`,\n    patchBody: { fields: { stock: { integerValue: String(Math.trunc(newStock)) }, updatedAt: { timestampValue: nowIso } } },\n    postUrl: `https://firestore.googleapis.com/v1/projects/nextcodecarniceria/databases/(default)/documents/butcheries/${ctx.butcheryId}/sales/${ctx.saleId}/items?key=AIzaSyCNQM4TKM2KVZCF5c-rnCrW09helWwq_ZQ&documentId=${ctx.index}`,\n    postBody: { fields: { productId: { stringValue: ctx.productId }, productName: { stringValue: ctx.productName || '' }, quantity: { doubleValue: Number(ctx.quantity) }, unitPrice: { doubleValue: Number(unitPrice) }, subtotal: { doubleValue: Number(subtotal) }, category: { stringValue: ctx.category || '' }, createdAt: { timestampValue: nowIso }, updatedAt: { timestampValue: nowIso } } }\n  }\n}];"
+      },
+      "name": "create_sale: Calculate Stock/Item1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1456,
+        5072
+      ],
+      "id": "731e19d0-f4d8-4a95-aaf8-d2eb8231c898"
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{$json.patchUrl}}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{$json.patchBody}}",
+        "options": {}
+      },
+      "name": "create_sale: PATCH Stock1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1312,
+        5232
+      ],
+      "id": "b267b071-c6bf-4192-8fcc-dba25c2b5b99"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$json.postUrl}}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{$json.postBody}}",
+        "options": {}
+      },
+      "name": "create_sale: POST Item1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1280,
+        4928
+      ],
+      "id": "c2011975-028a-40df-95d8-f79f84ac1796"
+    },
+    {
+      "parameters": {
+        "jsCode": "const saleData = $node['create_sale: Build Sale'].json.saleData; if (saleData) { return [{ json: { ok: true, accion: 'create_sale', data: saleData, message: 'Venta creada' } }]; } return [{ json: { ok: false, accion: 'create_sale', error: 'No se pudo construir la respuesta de la venta.' } }];"
+      },
+      "name": "create_sale: Format Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1056,
+        5040
+      ],
+      "id": "25420cc1-5655-489d-85b4-7eed41abaea0"
+    }
+  ],
+  "connections": {
+    "create_sale: Build Sale": {
+      "main": [
+        [
+          {
+            "node": "create_sale: POST Sale",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "create_sale: POST Sale": {
+      "main": [
+        [
+          {
+            "node": "create_sale: Build Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "create_sale: Build Items": {
+      "main": [
+        [
+          {
+            "node": "create_sale: Ensure ProductId",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "create_sale: Ensure ProductId": {
+      "main": [
+        [
+          {
+            "node": "create_sale: IF needResolve1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "create_sale: IF needResolve1": {
+      "main": [
+        [
+          {
+            "node": "create_sale: Resolve Id (RunQuery)1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "create_sale: Update Stock (GET URL)1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "create_sale: Resolve Id (RunQuery)1": {
+      "main": [
+        [
+          {
+            "node": "create_sale: Apply Resolved Id1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "create_sale: Apply Resolved Id1": {
+      "main": [
+        [
+          {
+            "node": "create_sale: Update Stock (GET URL)1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "create_sale: Update Stock (GET URL)1": {
+      "main": [
+        [
+          {
+            "node": "create_sale: GET Product1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "create_sale: GET Product1": {
+      "main": [
+        [
+          {
+            "node": "create_sale: Calculate Stock/Item1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "create_sale: Calculate Stock/Item1": {
+      "main": [
+        [
+          {
+            "node": "create_sale: PATCH Stock1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "create_sale: PATCH Stock1": {
+      "main": [
+        [
+          {
+            "node": "create_sale: POST Item1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "create_sale: POST Item1": {
+      "main": [
+        [
+          {
+            "node": "create_sale: Format Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "create_sale: Format Response": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d0fd9d01bd53ed68f6d50b09887d0613ec3645288d574ee9953bbe9803c2b6fb"
+  }
+}
