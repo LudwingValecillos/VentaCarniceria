@@ -43,6 +43,7 @@ export const WhatsAppNumbersModal: React.FC<Props> = ({ isOpen, onClose, numbers
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [formData, setFormData] = useState<FormData>({ name: '', role: '', number: '' });
   const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState<boolean>(false);
   const inputNameRef = useRef<HTMLInputElement | null>(null);
   const inputRoleRef = useRef<HTMLSelectElement | null>(null);
   const inputNumberRef = useRef<HTMLInputElement | null>(null);
@@ -125,9 +126,10 @@ export const WhatsAppNumbersModal: React.FC<Props> = ({ isOpen, onClose, numbers
     return true;
   };
 
-  const add = () => {
+  const add = async () => {
     if (!validateForm()) return;
-    
+    if (saving) return;
+    setSaving(true);
     const newNumber: WhatsAppNumber = {
       id: Date.now().toString(),
       name: formData.name.trim(),
@@ -136,9 +138,20 @@ export const WhatsAppNumbersModal: React.FC<Props> = ({ isOpen, onClose, numbers
       createdAt: new Date(),
       updatedAt: new Date(),
     };
-    
-    setList(prev => [...prev, newNumber]); 
-    reset();
+    const nextList = [...list, newNumber];
+    setList(nextList);
+    try {
+      const ok = await Promise.resolve(onSave(nextList)) as boolean | void;
+      if (ok === false) {
+        setError('No se pudo guardar el nuevo número');
+        // revert local
+        setList(list);
+        return;
+      }
+      reset();
+    } finally {
+      setSaving(false);
+    }
   };
 
   const startEdit = (i: number) => { 
@@ -151,29 +164,55 @@ export const WhatsAppNumbersModal: React.FC<Props> = ({ isOpen, onClose, numbers
     setError(null); 
   };
 
-  const applyEdit = () => {
+  const applyEdit = async () => {
     if (!validateForm()) return;
     if (editingIndex === null) return;
-    
-    setList(prev => prev.map((n, i) => 
-      i === editingIndex 
-        ? { 
-            ...n, 
+    if (saving) return;
+    setSaving(true);
+    const nextList = list.map((n, i) => (
+      i === editingIndex
+        ? {
+            ...n,
             name: formData.name.trim(),
             role: formData.role.trim(),
             number: ensure549(formData.number.trim()),
-            updatedAt: new Date()
+            updatedAt: new Date(),
           }
         : n
     ));
-    reset();
+    const prevList = list;
+    setList(nextList);
+    try {
+      const ok = await Promise.resolve(onSave(nextList)) as boolean | void;
+      if (ok === false) {
+        setError('No se pudieron guardar los cambios');
+        setList(prevList);
+        return;
+      }
+      reset();
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const remove = (i: number) => {
+  const remove = async (i: number) => {
     const toDelete = list[i];
     const ok = window.confirm(`¿Eliminar a ${toDelete?.name} (${toDelete?.number})?`);
     if (!ok) return;
-    setList(prev => prev.filter((_, idx) => idx !== i));
+    if (saving) return;
+    setSaving(true);
+    const nextList = list.filter((_, idx) => idx !== i);
+    const prevList = list;
+    setList(nextList);
+    try {
+      const saved = await Promise.resolve(onSave(nextList)) as boolean | void;
+      if (saved === false) {
+        setError('No se pudo eliminar el número');
+        setList(prevList);
+      }
+    } finally {
+      setSaving(false);
+    }
   };
   const saveAll = async () => { 
     try {
@@ -324,6 +363,7 @@ export const WhatsAppNumbersModal: React.FC<Props> = ({ isOpen, onClose, numbers
                 <Phone className="w-4 h-4 md:w-5 md:h-5" />
                 Números Registrados ({list.length})
               </h3>
+              <span className="text-xs text-gray-500">Guardado automático {saving || isLoading ? '· Guardando…' : ''}</span>
             </div>
 
             {list.length === 0 ? (
@@ -368,22 +408,14 @@ export const WhatsAppNumbersModal: React.FC<Props> = ({ isOpen, onClose, numbers
             )}
           </div>
 
-          {/* Footer */}
+          {/* Footer: solo cerrar */}
           <div className="border-t border-gray-200 bg-white p-2 md:p-6">
-            <div className="flex items-center justify-between">
-              <button 
-                onClick={onClose} 
+            <div className="flex items-center justify-end">
+              <button
+                onClick={onClose}
                 className="px-3 md:px-4 py-1.5 md:py-2 text-gray-600 hover:text-gray-800 transition-all duration-200 text-sm"
               >
-                Cancelar
-              </button>
-              <button 
-                disabled={isLoading || list.length === 0}
-                onClick={saveAll} 
-                className="px-4 md:px-6 py-1.5 md:py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg flex items-center gap-1.5 md:gap-2 disabled:opacity-50 transition-all duration-200 text-sm"
-              >
-                <Save className="w-3.5 h-3.5 md:w-4 md:h-4" /> 
-                {isLoading ? 'Guardando...' : 'Guardar Cambios'}
+                Cerrar
               </button>
             </div>
           </div>
