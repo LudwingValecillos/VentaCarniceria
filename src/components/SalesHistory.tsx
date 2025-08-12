@@ -46,37 +46,26 @@ export const SalesHistory: React.FC = () => {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     
-    console.log('📅 Calculando rango de fechas para filtro:', filter);
-    console.log('📅 Fecha actual:', now.toISOString());
-    console.log('📅 Inicio del día:', today.toISOString());
+   
     
     switch (filter) {
       case 'today': {
         const endDate = new Date(today.getTime() + 24 * 60 * 60 * 1000 - 1); // End of today
-        console.log('📅 Rango para hoy:', {
-          start: today.toISOString(),
-          end: endDate.toISOString()
-        });
+       
         return { startDate: today, endDate };
       }
       case 'week': {
         const weekStart = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
-        console.log('📅 Rango para semana:', {
-          start: weekStart.toISOString(),
-          end: now.toISOString()
-        });
+       
         return { startDate: weekStart, endDate: now };
       }
       case 'month': {
         const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-        console.log('📅 Rango para mes:', {
-          start: monthStart.toISOString(),
-          end: now.toISOString()
-        });
+       
         return { startDate: monthStart, endDate: now };
       }
       default:
-        console.log('📅 Sin filtro de fecha');
+       
         return { startDate: undefined, endDate: undefined };
     }
   };
@@ -87,20 +76,9 @@ export const SalesHistory: React.FC = () => {
     try {
       const { startDate, endDate } = getDateRange(dateFilter);
       // Solo filtrar por fecha en la consulta, nunca por status
-      console.log('🔍 Aplicando filtros (solo fecha en backend):', {
-        dateFilter,
-        statusFilter,
-        startDate: startDate?.toISOString(),
-        endDate: endDate?.toISOString()
-      });
+
       const salesData = await fetchSalesHistory(100, startDate, endDate, undefined);
-      console.log('📊 Ventas obtenidas:', {
-        total: salesData.length,
-        byStatus: salesData.reduce((acc, sale) => {
-          acc[sale.status] = (acc[sale.status] || 0) + 1;
-          return acc;
-        }, {} as Record<string, number>)
-      });
+     
       setSales(salesData);
       setCurrentPage(1); // Resetear a la primera página cuando cambien los filtros
     } catch (error) {
@@ -163,11 +141,11 @@ export const SalesHistory: React.FC = () => {
             if (result.shouldDeductStock) {
               // Descontar del stock (pendiente/cancelado -> completado)
               newStock = Math.max(0, currentStock - item.quantity);
-              console.log(`📦 Descontando ${item.quantity} de ${item.productName} (stock: ${currentStock} -> ${newStock})`);
+             
             } else {
               // Restaurar al stock (completado -> pendiente/cancelado)
               newStock = currentStock + item.quantity;
-              console.log(`📦 Restaurando ${item.quantity} a ${item.productName} (stock: ${currentStock} -> ${newStock})`);
+             
             }
             
             await updateProductStockAction(item.productId, newStock);

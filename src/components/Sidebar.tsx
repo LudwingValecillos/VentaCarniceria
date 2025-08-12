@@ -203,10 +203,10 @@ export function Sidebar({ isOpen, onClose, onCategorySelect }: SidebarProps) {
             
             {/* Info adicional */}
             <div className="mt-4 pt-4 border-t border-gray-200">
-              <p className="text-xs text-gray-500 text-center leading-relaxed">
-                <span className="font-medium">Horarios:</span><br />
-                <div dangerouslySetInnerHTML={{ __html: STORE_CONFIG.schedules.replace(/\|/g, '<br/>') }} />
-              </p>
+              <div className="text-xs text-gray-500 text-center leading-relaxed">
+                <span className="font-medium">Horarios:</span>
+                <div className="mt-1" dangerouslySetInnerHTML={{ __html: STORE_CONFIG.schedules.replace(/\|/g, '<br/>') }} />
+              </div>
             </div>
           </div>
         </div>

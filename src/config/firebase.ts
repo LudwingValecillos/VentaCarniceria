@@ -2,6 +2,7 @@
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import { getStorage } from "firebase/storage";
+import { initializeFirestore } from "firebase/firestore";
 // TODO: Add SDKs for Firebase products that you want to use
 
 const firebaseConfig = {
@@ -16,6 +17,9 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
+
+// Configure Firestore transport to reduce noisy long-polling in some environments
+initializeFirestore(app, { experimentalAutoDetectLongPolling: true });
 
 // Initialize Analytics (only in browser environment)
 let analytics;

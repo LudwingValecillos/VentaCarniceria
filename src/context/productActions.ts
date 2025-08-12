@@ -83,7 +83,7 @@ export const useProductActions = (
         // Actualizar con el producto real del backend
         dispatch({ type: 'UPDATE_PRODUCT', payload: newProduct });
         
-        console.log('Producto agregado exitosamente');
+       
       } else {
         throw new Error('Error al agregar producto');
       }
@@ -93,7 +93,7 @@ export const useProductActions = (
       
       // Revertir adición optimista
       dispatch({ type: 'REMOVE_PRODUCT', payload: tempProduct.id });
-      console.error('Error al agregar el producto');
+     
       throw error;
     }
   }, [dispatch]);
@@ -157,7 +157,7 @@ export const useProductActions = (
     } catch (error) {
       // Revertir en caso de error
       revertOptimistic(productId, currentProduct);
-      console.error('Error al actualizar el stock:', error);
+     
       dispatch({ 
         type: 'UPDATE_PRODUCT_STOCK_FAILURE', 
         payload: error instanceof Error ? error.message : 'Error desconocido'
@@ -199,11 +199,11 @@ export const useProductActions = (
       // Actualizar en backend
       await updateProduct(productId, { name: newName });
       
-      console.log('Nombre actualizado');
+     
     } catch (error) {
       // Revertir en caso de error
       revertOptimistic(productId, currentProduct);
-      console.error('Error al actualizar el nombre');
+     
       dispatch({ 
         type: 'UPDATE_PRODUCT_NAME_FAILURE', 
         payload: error instanceof Error ? error.message : 'Error desconocido'
@@ -244,7 +244,7 @@ export const useProductActions = (
         type: 'UPDATE_PRODUCT_IMAGE_FAILURE', 
         payload: error instanceof Error ? error.message : 'Error desconocido'
       });
-      console.error('Error al actualizar la imagen');
+     
     }
   }, [findProduct, updateOptimistic, revertOptimistic, dispatch]);
 
@@ -260,11 +260,11 @@ export const useProductActions = (
       // Eliminar en backend
       await deleteProduct(productId);
       
-      console.log('Producto eliminado');
+     
     } catch (error) {
       // Revertir eliminación optimista
       dispatch({ type: 'ADD_PRODUCT', payload: currentProduct });
-      console.error('Error al eliminar el producto');
+     
       dispatch({ 
         type: 'DELETE_PRODUCT_FAILURE', 
         payload: error instanceof Error ? error.message : 'Error desconocido'

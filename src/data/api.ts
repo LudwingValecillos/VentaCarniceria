@@ -17,14 +17,34 @@ import {
   updateSaleStatus
 } from '../services/firebaseAdminService';
 
+// Simple in-memory cache with TTL to avoid duplicate fetches
+let productsCache: { data: Product[]; expiresAt: number } | null = null;
+let productsInFlight: Promise<Product[]> | null = null;
+const PRODUCTS_TTL_MS = 60_000; // 1 min TTL
+
 export const fetchProducts = async (): Promise<Product[]> => {
-  try {
-    // Use the Firebase admin service
-    return await fetchProductsFromFirebase();
-  } catch (error) {
-    console.error('Error al obtener los productos:', error);
-    return [];
+  const now = Date.now();
+  if (productsCache && productsCache.expiresAt > now) {
+    return productsCache.data;
   }
+  if (productsInFlight) {
+    return productsInFlight;
+  }
+
+  productsInFlight = (async () => {
+    try {
+      const data = await fetchProductsFromFirebase();
+      productsCache = { data, expiresAt: Date.now() + PRODUCTS_TTL_MS };
+      return data;
+    } catch (error) {
+      console.error('Error al obtener los productos:', error);
+      return [] as Product[];
+    } finally {
+      productsInFlight = null;
+    }
+  })();
+
+  return productsInFlight;
 };
 
 // ----------------------------
@@ -166,9 +186,7 @@ export const createSaleAPI = async (saleData: {
   status?: 'completed' | 'pending' | 'cancelled';
 }) => {
   try {
-    console.log('🛒 Creating sale...');
     const sale = await createSale(saleData);
-    console.log('✅ Sale created successfully!');
     return sale;
   } catch (error) {
     console.error('Error creating sale:', error);
@@ -206,7 +224,6 @@ export const updateSaleStatusAPI = async (
 ) => {
   try {
     const result = await updateSaleStatus(saleId, newStatus, currentStatus);
-    console.log('✅ Sale status updated successfully!');
     
     // Return information about whether stock needs updating
     return {

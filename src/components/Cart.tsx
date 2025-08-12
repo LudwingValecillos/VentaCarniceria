@@ -29,6 +29,10 @@ export function Cart({ items, onUpdateQuantity, onRemoveItem }: CartProps) {
     },
     0
   );
+  
+  
+  const whatsappNumber = STORE_CONFIG.social.whatsapp.url
+  
 
   // Función para formatear precios con separadores de miles
   const formatPrice = (price: number): string => {
@@ -42,7 +46,7 @@ export function Cart({ items, onUpdateQuantity, onRemoveItem }: CartProps) {
     setIsProcessingOrder(true);
     try {
       // Registrar venta en Firebase con estado "pendiente"
-      const saleData = {
+      const saleData = {  
         items: items.map(item => ({
           productId: item.id,
           productName: item.name,
@@ -75,7 +79,7 @@ export function Cart({ items, onUpdateQuantity, onRemoveItem }: CartProps) {
         `*Total:* $${formatPrice(total)}`;
 
       window.open(
-        `${STORE_CONFIG.social.whatsapp.url}?text=${encodeURIComponent(message)}`
+        `${whatsappNumber}?text=${encodeURIComponent(message)}`
       );
 
       // Limpiar carrito y cerrar modales

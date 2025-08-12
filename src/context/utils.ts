@@ -31,8 +31,7 @@ export const safeToast = (
         toast.info(message, config);
     }
   } catch (error) {
-    // Fallback en caso de error con toast
-    console.log(`Toast ${type.toUpperCase()}: ${message}`);
+    console.error('Error al mostrar toast:', error);
   }
 };
 

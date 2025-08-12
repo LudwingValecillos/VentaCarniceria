@@ -461,8 +461,8 @@ export const AdminProducts: React.FC = () => {
                                 <span className="hidden md:inline">Oferta</span>
                                 <span className="md:hidden">★</span>
                               </div>
-                            ) : (
-                              <span className="hidden md:inline">Sin oferta</span>
+                            ) : ( 
+                              <span className="">Sin oferta</span>
                             )}
                           </button>
                         </div>

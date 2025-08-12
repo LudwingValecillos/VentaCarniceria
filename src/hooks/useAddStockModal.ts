@@ -179,7 +179,7 @@ export const useAddStockModal = ({ isOpen, onClose }: UseAddStockModalProps) => 
         const newStock = currentStock + item.stockToAdd;
         await updateProductStockAction(item.id, newStock);
         
-        console.log(`📦 Stock agregado: ${item.name} (${currentStock} + ${item.stockToAdd} = ${newStock})`);
+       
       });
 
       await Promise.all(updatePromises);

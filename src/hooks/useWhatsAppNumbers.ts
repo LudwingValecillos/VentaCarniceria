@@ -61,19 +61,19 @@ export const useWhatsAppNumbers = () => {
     setError(null);
     try {
       const butcheryId = await getCurrentButcheryId();
-      console.log('🔍 Cargando números para carnicería:', butcheryId);
+     
       
       const ref = doc(db, 'butcheries', butcheryId);
       const d = await getDoc(ref);
       const data = d.data() || {};
       
-      console.log('📄 Datos obtenidos de Firebase:', data);
+     
       
       const arr = Array.isArray((data as { whatsappNumbers?: FirebaseWhatsAppNumber[] }).whatsappNumbers) 
         ? (data as { whatsappNumbers: FirebaseWhatsAppNumber[] }).whatsappNumbers 
         : [];
       
-      console.log('📱 Array de números encontrado:', arr);
+     
       
       // Convert array of objects to WhatsAppNumber[] with proper timestamps
       const convertedNumbers: WhatsAppNumber[] = arr.map((item: FirebaseWhatsAppNumber, index: number) => ({
@@ -85,10 +85,10 @@ export const useWhatsAppNumbers = () => {
         updatedAt: item.updatedAt?.toDate() || new Date(),
       }));
       
-      console.log('✅ Números convertidos:', convertedNumbers);
+     
       setNumbers(convertedNumbers);
     } catch (e) {
-      console.error('❌ Error al cargar los números de WhatsApp:', e);
+     
       setError('Error al cargar los números de WhatsApp');
     } finally {
       setIsLoading(false);
@@ -100,7 +100,7 @@ export const useWhatsAppNumbers = () => {
     setError(null);
     try {
       const butcheryId = await getCurrentButcheryId();
-      console.log('💾 Guardando números para carnicería:', butcheryId);
+     
       
       const ref = doc(db, 'butcheries', butcheryId);
       
@@ -123,18 +123,17 @@ export const useWhatsAppNumbers = () => {
         };
       });
       
-      console.log('💾 Guardando números en Firebase:', firebaseNumbers);
-      console.log('💾 Estructura del documento a actualizar:', { whatsappNumbers: firebaseNumbers });
+     
       
       await updateDoc(ref, { whatsappNumbers: firebaseNumbers });
       
       // Actualizar el estado local inmediatamente
       setNumbers(normalizedNext);
       
-      console.log('✅ Números guardados exitosamente');
+     
       return true;
     } catch (e) {
-      console.error('❌ Error al guardar los números de WhatsApp:', e);
+     
       console.error('❌ Detalles del error:', {
         message: e instanceof Error ? e.message : 'Error desconocido',
         stack: e instanceof Error ? e.stack : undefined

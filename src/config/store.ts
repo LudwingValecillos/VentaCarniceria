@@ -1,4 +1,4 @@
-import { getFirestore, doc, getDoc, collection, getDocs } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, collection, getDocs, query, where } from 'firebase/firestore';
 import { app } from './firebase';
 import { WhatsAppNumber } from '../types';
 
@@ -17,8 +17,8 @@ const DEFAULT_CONFIG = {
   
   // Información de contacto
   contact: {
-    phone: "11 2192-6239",
-    whatsapp: "91121926239",
+    phone: "11 2728-1099",
+    whatsapp: "5491127281099",
     location: "Buenos Aires, Argentina",
     delivery: "Envíos gratis a toda la zona",
   },
@@ -34,7 +34,7 @@ const DEFAULT_CONFIG = {
       username: "Carnicería Lo De Nacho"
     },
     whatsapp: {
-      url: "https://wa.me/91121926239", 
+      url: "https://wa.me/5491127281099", 
       message: "Hola, me gustaría hacer un pedido."
     }
   },
@@ -73,6 +73,20 @@ interface DynamicConfig {
 // Configuración dinámica que se carga desde Firebase
 let DYNAMIC_CONFIG: DynamicConfig = { ...DEFAULT_CONFIG };
 
+// Evitar múltiples cargas simultáneas o repetidas
+let hasLoadedConfig = false;
+let loadConfigPromise: Promise<void> | null = null;
+
+// Cache local para configuración
+const CONFIG_CACHE_KEY = 'STORE_CONFIG_CACHE_V1';
+const CONFIG_TTL_MS = 5 * 60 * 1000; // 5 minutos
+
+interface CachedConfig {
+  timestamp: number;
+  butcheryId?: string;
+  config: DynamicConfig;
+}
+
 // Función para obtener la URL de búsqueda
 const getSearchUrl = (): string => {
   let searchUrl = window.location.origin;
@@ -106,9 +120,7 @@ const updateFaviconAndTitle = (logoUrl: string, name: string): void => {
     
     // Actualizar título de la página
     document.title = `${name} - Los mejores cortes de carne fresca`;
-    
-    console.log('🎯 Favicon actualizado:', logoUrl);
-    console.log('📄 Título actualizado:', document.title);
+   
   } catch (error) {
     console.error('❌ Error al actualizar favicon/título:', error);
   }
@@ -116,89 +128,134 @@ const updateFaviconAndTitle = (logoUrl: string, name: string): void => {
 
 // Función para cargar la configuración desde Firebase
 export const loadStoreConfig = async (): Promise<void> => {
-  try {
-    const searchUrl = getSearchUrl();
-    console.log('🔍 Buscando configuración para URL:', searchUrl);
-    
-    // Buscar la carnicería por URL
-    const butcheriesRef = collection(db, 'butcheries');
-    const butcheriesSnapshot = await getDocs(butcheriesRef);
-    
-    let butcheryData: any = null; // eslint-disable-line @typescript-eslint/no-explicit-any
-    butcheriesSnapshot.forEach((doc) => {
-      const data = doc.data();
-      if (data.url === searchUrl) {
-        butcheryData = { id: doc.id, ...data };
-      }
-    });
-    
-    // Si no encuentra por URL, usar 'demo' como fallback
-    if (!butcheryData) {
-      console.log('📄 No se encontró por URL, usando carnicería demo');
-      const demoDocRef = doc(db, 'butcheries', 'demo');
-      const demoDoc = await getDoc(demoDocRef);
-      if (demoDoc.exists()) {
-        butcheryData = { id: 'demo', ...demoDoc.data() };
-      }
-    }
-    
-    if (butcheryData) {
-      console.log('✅ Configuración cargada:', butcheryData);
-      console.log('📱 Instagram URL:', butcheryData.instagram);
-      console.log('📘 Facebook URL:', butcheryData.facebook);
-      console.log('📞 WhatsApp:', butcheryData.whatsappNumber);
-      
-      // Actualizar configuración dinámica
-      DYNAMIC_CONFIG = {
-        ...DEFAULT_CONFIG,
-        name: butcheryData.name || DEFAULT_CONFIG.name,
-        logoUrl: butcheryData.logoUrl || "",
-        bannerUrl: butcheryData.bannerUrl || "",
-        primaryColor: butcheryData.primaryColor || DEFAULT_CONFIG.primaryColor,
-        secondaryColor: butcheryData.secondaryColor || DEFAULT_CONFIG.secondaryColor,
-        schedules: butcheryData.schedules || DEFAULT_CONFIG.schedules,
-        contact: {
-          ...DEFAULT_CONFIG.contact,
-          whatsapp: butcheryData.whatsappNumber?.replace('+', '') || DEFAULT_CONFIG.contact.whatsapp,
-        },
-        social: {
-          instagram: {
-            url: butcheryData.instagram || DEFAULT_CONFIG.social.instagram.url,
-            username: butcheryData.instagramUsername || 
-                     (butcheryData.instagram ? `@${butcheryData.instagram.split('/').pop()}` : DEFAULT_CONFIG.social.instagram.username)
-          },
-          facebook: {
-            url: butcheryData.facebook || DEFAULT_CONFIG.social.facebook.url,
-            username: butcheryData.facebookUsername || butcheryData.name || DEFAULT_CONFIG.social.facebook.username
-          },
-          whatsapp: {
-            url: butcheryData.whatsappNumber ? `https://wa.me/${butcheryData.whatsappNumber.replace('+', '')}` : DEFAULT_CONFIG.social.whatsapp.url,
-            message: "Hola, me gustaría hacer un pedido."
+  if (hasLoadedConfig) return;
+  if (loadConfigPromise) return loadConfigPromise;
+
+  loadConfigPromise = (async () => {
+    try {
+      // 1) Intentar leer desde cache válido
+      try {
+        const raw = localStorage.getItem(CONFIG_CACHE_KEY);
+        if (raw) {
+          const cached: CachedConfig = JSON.parse(raw);
+          if (cached && cached.timestamp && (Date.now() - cached.timestamp) < CONFIG_TTL_MS && cached.config) {
+            DYNAMIC_CONFIG = { ...DEFAULT_CONFIG, ...cached.config };
+            // Actualizar favicon/título con datos cacheados
+            if (DYNAMIC_CONFIG.logoUrl) {
+              updateFaviconAndTitle(DYNAMIC_CONFIG.logoUrl, DYNAMIC_CONFIG.name);
+            } else if (DYNAMIC_CONFIG.name) {
+              document.title = `${DYNAMIC_CONFIG.name} - Los mejores cortes de carne fresca`;
+            }
+            hasLoadedConfig = true;
+            return; // No hacer red si cache está fresco
           }
-        },
-        whatsappNumbers: Array.isArray(butcheryData.whatsappNumbers) 
-          ? butcheryData.whatsappNumbers.map((item: { name?: string; role?: string; number?: string; createdAt?: any; updatedAt?: any }, index: number) => ({
-              id: `temp-${index}`,
-              name: item.name || '',
-              role: item.role || '',
-              number: item.number || '',
-              createdAt: item.createdAt?.toDate() || new Date(),
-              updatedAt: item.updatedAt?.toDate() || new Date(),
-            }))
-          : DEFAULT_CONFIG.whatsappNumbers
-      };
-      
-      // Actualizar favicon y título si hay logoUrl
-      if (butcheryData.logoUrl) {
-        updateFaviconAndTitle(butcheryData.logoUrl, butcheryData.name || DEFAULT_CONFIG.name);
-      } else if (butcheryData.name) {
-        // Solo actualizar título si no hay logo
-        document.title = `${butcheryData.name} - Los mejores cortes de carne fresca`;
+        }
+      } catch { /* noop */ }
+
+      // 2) Cargar desde Firestore si no hay cache fresco
+      const searchUrl = getSearchUrl();
+
+      // Buscar la carnicería por URL con query directa
+      const butcheriesRef = collection(db, 'butcheries');
+      const urlQuery = query(butcheriesRef, where('url', '==', searchUrl));
+      const butcheriesSnapshot = await getDocs(urlQuery);
+
+      let butcheryData: Record<string, unknown> | null = null;
+      if (!butcheriesSnapshot.empty) {
+        const found = butcheriesSnapshot.docs[0];
+        butcheryData = { id: found.id, ...found.data() };
       }
+
+      // Si no encuentra por URL, usar 'demo' como fallback
+      if (!butcheryData) {
+        const demoDocRef = doc(db, 'butcheries', 'demo');
+        const demoDoc = await getDoc(demoDocRef);
+        if (demoDoc.exists()) {
+          butcheryData = { id: 'demo', ...demoDoc.data() } as Record<string, unknown>;
+        }
+      }
+
+      if (butcheryData) {
+        const data = butcheryData as {
+          id?: string;
+          name?: string;
+          logoUrl?: string;
+          bannerUrl?: string;
+          primaryColor?: string;
+          secondaryColor?: string;
+          schedules?: string;
+          whatsappNumber?: string;
+          instagram?: string;
+          instagramUsername?: string;
+          facebook?: string;
+          facebookUsername?: string;
+          whatsappNumbers?: Array<{ name?: string; role?: string; number?: string; createdAt?: { toDate: () => Date }; updatedAt?: { toDate: () => Date } }>;
+        };
+
+        DYNAMIC_CONFIG = {
+          ...DEFAULT_CONFIG,
+          name: data.name || DEFAULT_CONFIG.name,
+          logoUrl: data.logoUrl || '',
+          bannerUrl: data.bannerUrl || '',
+          primaryColor: data.primaryColor || DEFAULT_CONFIG.primaryColor,
+          secondaryColor: data.secondaryColor || DEFAULT_CONFIG.secondaryColor,
+          schedules: data.schedules || DEFAULT_CONFIG.schedules,
+          contact: {
+            ...DEFAULT_CONFIG.contact,
+            whatsapp: data.whatsappNumber?.replace('+', '') || DEFAULT_CONFIG.contact.whatsapp,
+          },
+          social: {
+            instagram: {
+              url: data.instagram || DEFAULT_CONFIG.social.instagram.url,
+              username: data.instagramUsername || (data.instagram ? `@${data.instagram.split('/').pop()}` : DEFAULT_CONFIG.social.instagram.username),
+            },
+            facebook: {
+              url: data.facebook || DEFAULT_CONFIG.social.facebook.url,
+              username: data.facebookUsername || data.name || DEFAULT_CONFIG.social.facebook.username,
+            },
+            whatsapp: {
+              url: data.whatsappNumber ? `https://wa.me/${data.whatsappNumber.replace('+', '')}` : DEFAULT_CONFIG.social.whatsapp.url,
+              message: 'Hola, me gustaría hacer un pedido.',
+            },
+          },
+          whatsappNumbers: Array.isArray(data.whatsappNumbers)
+            ? data.whatsappNumbers.map((item, index) => ({
+                id: `temp-${index}`,
+                name: item.name || '',
+                role: item.role || '',
+                number: item.number || '',
+                createdAt: item.createdAt?.toDate() || new Date(),
+                updatedAt: item.updatedAt?.toDate() || new Date(),
+              }))
+            : DEFAULT_CONFIG.whatsappNumbers,
+        };
+
+        // Actualizar favicon y título si hay logoUrl
+        if (data.logoUrl) {
+          updateFaviconAndTitle(data.logoUrl, data.name || DEFAULT_CONFIG.name);
+        } else if (data.name) {
+          document.title = `${data.name} - Los mejores cortes de carne fresca`;
+        }
+
+        // 3) Guardar en cache local
+        try {
+          const cachePayload: CachedConfig = {
+            timestamp: Date.now(),
+            butcheryId: (butcheryData as { id?: string }).id,
+            config: DYNAMIC_CONFIG,
+          };
+          localStorage.setItem(CONFIG_CACHE_KEY, JSON.stringify(cachePayload));
+        } catch { /* noop */ }
+      }
+    } catch (error) {
+      console.error('❌ Error al cargar configuración:', error);
+    } finally {
+      hasLoadedConfig = true;
+      loadConfigPromise = null;
     }
-  } catch (error) {
-    console.error('❌ Error al cargar configuración:', error);
-  }
+  })();
+
+  return loadConfigPromise;
 };
 
 // Configuración exportada que se actualiza dinámicamente

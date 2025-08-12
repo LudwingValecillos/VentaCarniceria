@@ -27,30 +27,42 @@ const db = getFirestore(app);
 /**
  * Helper function to get the current butchery ID based on URL
  */
+let cachedButcheryId: string | null = null;
+let resolveButcheryPromise: Promise<string> | null = null;
 const getCurrentButcheryId = async (): Promise<string> => {
   try {
-    // Get the search URL (same logic as in other files)
-    let searchUrl = window.location.origin;
-    if (searchUrl.includes('localhost') || searchUrl.includes('127.0.0.1')) {
-      searchUrl = 'https://voluble-squirrel-a30bd3.netlify.app';
-    }
+    if (cachedButcheryId) return cachedButcheryId;
+    if (resolveButcheryPromise) return resolveButcheryPromise;
 
-    // Search for butchery by URL
-    const butcheriesRef = collection(db, 'butcheries');
-    const butcheriesSnapshot = await getDocs(butcheriesRef);
-    
-    let butcheryId: string | null = null;
-    butcheriesSnapshot.forEach((doc) => {
-      const data = doc.data();
-      if (data.url === searchUrl) {
-        butcheryId = doc.id;
+    resolveButcheryPromise = (async () => {
+      // Get the search URL (same logic as in other files)
+      let searchUrl = window.location.origin;
+      if (searchUrl.includes('localhost') || searchUrl.includes('127.0.0.1')) {
+        searchUrl = 'https://voluble-squirrel-a30bd3.netlify.app';
       }
-    });
 
-    // If not found, use 'demo' as fallback
-    return butcheryId || 'demo';
+      // Search for butchery by URL
+      const butcheriesRef = collection(db, 'butcheries');
+      const urlQuery = query(butcheriesRef, where('url', '==', searchUrl));
+      const butcheriesSnapshot = await getDocs(urlQuery);
+
+      let butcheryId: string | null = null;
+      if (!butcheriesSnapshot.empty) {
+        butcheryId = butcheriesSnapshot.docs[0].id;
+      }
+
+      // If not found, use 'demo' as fallback
+      cachedButcheryId = butcheryId || 'demo';
+      return cachedButcheryId;
+    })();
+
+    const id = await resolveButcheryPromise;
+    resolveButcheryPromise = null;
+    return id;
   } catch (error) {
     console.error('Error getting current butchery ID:', error);
+    cachedButcheryId = 'demo';
+    resolveButcheryPromise = null;
     return 'demo';
   }
 };
@@ -104,7 +116,7 @@ export const deleteImageFromImgBB = async (imageUrl: string): Promise<void> => {
     
     // ImgBB no permite eliminar imágenes con cuenta gratuita
     // Solo registramos que se "eliminaría"
-    console.log('📝 ImgBB image would be deleted (free account limitation):', imageUrl);
+   
   } catch (error) {
     console.error('❌ Error in image cleanup:', error);
     // Don't throw error, just log it
@@ -138,10 +150,11 @@ export const fetchProductsFromFirebase = async (): Promise<Product[]> => {
       });
     });
     
-    console.log(`✅ Fetched ${products.length} products from Firebase`);
+   
     return products;
   } catch (error) {
-    console.error('❌ Error fetching products from Firebase:', error);
+    console.error('Error al cargar productos de la base de datos:', error);
+   
     throw new Error('Error al cargar productos de la base de datos');
   }
 };
@@ -194,10 +207,10 @@ export const addProductToFirebase = async (productData: {
       stock: newProductData.stock
     };
     
-    console.log('✅ Product added to Firebase:', newProduct.name);
+   
     return newProduct;
   } catch (error) {
-    console.error('❌ Error adding product to Firebase:', error);
+    console.error('Error al agregar producto a la base de datos:', error);
     throw new Error('Error al agregar producto a la base de datos');
   }
 };
@@ -225,9 +238,9 @@ export const updateProductInFirebase = async (
     }
     
     await updateDoc(productRef, updateData);
-    console.log('✅ Product updated in Firebase:', productId);
+   
   } catch (error) {
-    console.error('❌ Error updating product in Firebase:', error);
+    console.error('Error al actualizar producto en la base de datos:', error);
     throw new Error('Error al actualizar producto en la base de datos');
   }
 };
@@ -265,9 +278,9 @@ export const updateProductImageInFirebase = async (
       await deleteImageFromImgBB(oldImageUrl);
     }
     
-    console.log('✅ Product image updated in Firebase:', productId);
+   
   } catch (error) {
-    console.error('❌ Error updating product image in Firebase:', error);
+    console.error('Error al actualizar imagen del producto:', error);
     throw new Error('Error al actualizar imagen del producto');
   }
 };
@@ -291,9 +304,9 @@ export const deleteProductFromFirebase = async (productId: string): Promise<void
     
     // Delete product document
     await deleteDoc(productRef);
-    console.log('✅ Product deleted from Firebase:', productId);
+   
   } catch (error) {
-    console.error('❌ Error deleting product from Firebase:', error);
+    console.error('Error al eliminar producto de la base de datos:', error);
     throw new Error('Error al eliminar producto de la base de datos');
   }
 };
@@ -320,9 +333,9 @@ export const toggleProductStatusInFirebase = async (productId: string): Promise<
       updatedAt: serverTimestamp()
     });
     
-    console.log('✅ Product status toggled in Firebase:', productId, 'Active:', newStatus);
+   
   } catch (error) {
-    console.error('❌ Error toggling product status in Firebase:', error);
+    console.error('Error al cambiar estado del producto:', error);
     throw new Error('Error al cambiar estado del producto');
   }
 };
@@ -350,9 +363,9 @@ export const toggleProductOfferInFirebase = async (productId: string): Promise<v
       updatedAt: serverTimestamp()
     });
     
-    console.log('✅ Product offer status toggled in Firebase:', productId, 'Offer:', newOfferStatus);
+    
   } catch (error) {
-    console.error('❌ Error toggling product offer in Firebase:', error);
+    console.error('Error al cambiar estado de oferta del producto:', error);
     throw new Error('Error al cambiar estado de oferta del producto');
   }
 };
@@ -373,9 +386,9 @@ export const updateProductPriceInFirebase = async (
       updatedAt: serverTimestamp()
     });
     
-    console.log('✅ Product price updated in Firebase:', productId, 'New price:', newPrice);
+   
   } catch (error) {
-    console.error('❌ Error updating product price in Firebase:', error);
+    console.error('Error al actualizar precio del producto:', error);
     throw new Error('Error al actualizar precio del producto');
   }
 };
@@ -396,9 +409,9 @@ export const updateProductNameInFirebase = async (
       updatedAt: serverTimestamp()
     });
     
-    console.log('✅ Product name updated in Firebase:', productId, 'New name:', newName);
+   
   } catch (error) {
-    console.error('❌ Error updating product name in Firebase:', error);
+    console.error('Error al actualizar nombre del producto:', error);
     throw new Error('Error al actualizar nombre del producto');
   }
 };
@@ -419,9 +432,9 @@ export const updateProductStockInFirebase = async (
       updatedAt: serverTimestamp()
     });
     
-    console.log('✅ Product stock updated in Firebase:', productId, 'New stock:', newStock);
+   
   } catch (error) {
-    console.error('❌ Error updating product stock in Firebase:', error);
+    console.error('Error al actualizar stock del producto:', error);
     throw new Error('Error al actualizar stock del producto');
   }
 };
@@ -501,11 +514,11 @@ export const createSale = async (saleData: {
       notes: saleData.notes
     };
     
-    console.log('✅ Sale created successfully:', saleId);
+   
     return sale;
     
   } catch (error) {
-    console.error('❌ Error creating sale:', error);
+    console.error('Error al crear la venta:', error);
     throw new Error('Error al crear la venta');
   }
 };
@@ -523,13 +536,7 @@ export const getSalesHistory = async (
     const butcheryId = await getCurrentButcheryId();
     const salesRef = collection(db, 'butcheries', butcheryId, 'sales');
     
-    console.log('🔍 getSalesHistory - Parámetros:', {
-      butcheryId,
-      limitCount,
-      startDate: startDate?.toISOString(),
-      endDate: endDate?.toISOString(),
-      status
-    });
+   
     
     // Build query with filters
     const queryConstraints: QueryConstraint[] = [];
@@ -537,48 +544,36 @@ export const getSalesHistory = async (
     // Aplicar filtros en orden específico para evitar conflictos
     if (status && status !== 'all') {
       queryConstraints.push(where('status', '==', status));
-      console.log('🏷️ Aplicando filtro de estado:', status);
+     
     }
     
     if (startDate) {
       const startTimestamp = Timestamp.fromDate(startDate);
       queryConstraints.push(where('date', '>=', startTimestamp));
-      console.log('📅 Aplicando filtro de fecha inicio:', {
-        originalDate: startDate.toISOString(),
-        timestamp: startTimestamp.toDate().toISOString()
-      });
+     
     }
     
     if (endDate) {
       const endTimestamp = Timestamp.fromDate(endDate);
       queryConstraints.push(where('date', '<=', endTimestamp));
-      console.log('📅 Aplicando filtro de fecha fin:', {
-        originalDate: endDate.toISOString(),
-        timestamp: endTimestamp.toDate().toISOString()
-      });
+     
     }
     
     // Order by date descending and limit
     queryConstraints.push(orderBy('date', 'desc'));
     queryConstraints.push(limitQuery(limitCount));
     
-    console.log('🔧 Query constraints:', queryConstraints.length);
+   
     
     const q = query(salesRef, ...queryConstraints);
     const querySnapshot = await getDocs(q);
     
-    console.log('📊 QuerySnapshot size:', querySnapshot.size);
+   
     
     const sales: Sale[] = [];
     querySnapshot.forEach((doc) => {
       const data = doc.data();
-      console.log('📄 Document data:', {
-        id: doc.id,
-        status: data.status,
-        date: data.date?.toDate?.()?.toISOString() || 'No date',
-        hasStatus: 'status' in data,
-        hasDate: 'date' in data
-      });
+     
       
       sales.push({
         id: doc.id,
@@ -593,22 +588,12 @@ export const getSalesHistory = async (
       });
     });
     
-    console.log(`✅ Fetched ${sales.length} sales from Firebase`);
-    console.log('📊 Distribución por estado:', sales.reduce((acc, sale) => {
-      acc[sale.status] = (acc[sale.status] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>));
-    console.log('📋 Detalles de cada venta:', sales.map(sale => ({
-      id: sale.id,
-      status: sale.status,
-      date: sale.date.toISOString()
-    })));
+   
     
     return sales;
     
   } catch (error) {
-    console.error('❌ Error fetching sales history:', error);
-    console.error('❌ Detalles del error:', error);
+    console.error('Error al obtener el historial de ventas:', error);
     throw new Error('Error al obtener el historial de ventas');
   }
 };
@@ -660,11 +645,11 @@ export const getSaleWithItems = async (saleId: string): Promise<SaleWithItems> =
       });
     });
     
-    console.log(`✅ Fetched sale ${saleId} with ${items.length} items`);
+   
     return { ...sale, items };
     
   } catch (error) {
-    console.error('❌ Error fetching sale with items:', error);
+    console.error('Error al obtener los detalles de la venta:', error);
     throw new Error('Error al obtener los detalles de la venta');
   }
 };
@@ -714,7 +699,7 @@ export const updateSaleStatus = async (
       updatedAt: serverTimestamp()
     });
     
-    console.log(`✅ Sale status updated: ${saleId} -> ${newStatus}`);
+   
     
     return {
       needsStockUpdate: shouldDeductStock || shouldRestoreStock,
@@ -722,7 +707,7 @@ export const updateSaleStatus = async (
     };
     
   } catch (error) {
-    console.error('❌ Error updating sale status:', error);
+    console.error('Error al actualizar el estado de la venta:', error);
     throw new Error('Error al actualizar el estado de la venta');
   }
 };
@@ -735,28 +720,13 @@ export const testSalesDataStructure = async (): Promise<void> => {
     const butcheryId = await getCurrentButcheryId();
     const salesRef = collection(db, 'butcheries', butcheryId, 'sales');
     
-    console.log('🧪 Testing sales data structure...');
+   
     
     // Get all sales without filters to see the raw data
     const q = query(salesRef, orderBy('date', 'desc'), limitQuery(10));
-    const querySnapshot = await getDocs(q);
+    await getDocs(q);
     
-    console.log('📊 Found', querySnapshot.size, 'sales');
-    
-    querySnapshot.forEach((doc) => {
-      const data = doc.data();
-      console.log('📄 Sale document:', {
-        id: doc.id,
-        date: data.date,
-        dateType: typeof data.date,
-        dateToDate: data.date?.toDate?.()?.toISOString(),
-        status: data.status,
-        statusType: typeof data.status,
-        hasStatus: 'status' in data,
-        hasDate: 'date' in data,
-        allFields: Object.keys(data)
-      });
-    });
+
     
   } catch (error) {
     console.error('❌ Error testing data structure:', error);
